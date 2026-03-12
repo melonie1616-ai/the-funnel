@@ -704,6 +704,15 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 :root.dark-mode .sticky-note textarea { color:#fef9c3; }
 :root.dark-mode .sticky-note textarea::placeholder { color:#fde68a; }
 
+/* Sync button states */
+#syncBtn.syncing { animation: spin 1s linear infinite; }
+#syncBtn.sync-ok { background:var(--success) !important; }
+#syncBtn.sync-error { background:var(--danger) !important; }
+@keyframes spin {
+  from { transform:rotate(0deg); }
+  to { transform:rotate(360deg); }
+}
+
 /* Weekly review */
 #weeklyReviewBody h4 { color:var(--text); font-weight:600; }
 
@@ -1050,6 +1059,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <button class="topbar-icon-btn btn-export" onclick="exportData()" data-tooltip="Export Data">&#128229;</button>
   <button class="topbar-icon-btn btn-import" onclick="document.getElementById('importFile').click()" data-tooltip="Import Data">&#128228;</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+  <button class="topbar-icon-btn btn-export" id="syncBtn" onclick="syncNow()" data-tooltip="Sync Data">&#128260;</button>
   <button class="topbar-icon-btn btn-settings" id="notifBtn" onclick="toggleNotifications()" data-tooltip="Notifications: Off">&#128276;</button>
   <button class="topbar-icon-btn btn-settings" id="darkModeBtn" onclick="toggleDarkMode()" data-tooltip="Toggle Dark Mode">&#127763;</button>
   <button class="topbar-icon-btn btn-settings" onclick="openSettings()" data-tooltip="Settings">&#9881;</button>
@@ -1500,6 +1510,23 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         </div>
       </div>
       <div class="settings-group">
+        <h3>Cloud Sync (GitHub Gist)</h3>
+        <p>Sync your data across devices using a private GitHub Gist. Create a token at <a href="https://github.com/settings/tokens/new?scopes=gist&description=The+Funnel+Sync" target="_blank" style="color:var(--accent);">github.com/settings/tokens</a> with the <strong>gist</strong> scope.</p>
+        <div class="form-group">
+          <label>GitHub Personal Access Token</label>
+          <input type="password" id="settingsSyncToken" placeholder="ghp_...">
+        </div>
+        <div class="form-group">
+          <label>Gist ID (auto-created on first sync)</label>
+          <input type="text" id="settingsSyncGistId" placeholder="Will be filled automatically">
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px;">
+          <button class="btn btn-primary" onclick="syncPush()" style="font-size:12px;">Push to Cloud &#8593;</button>
+          <button class="btn btn-secondary" onclick="syncPull()" style="font-size:12px;">Pull from Cloud &#8595;</button>
+        </div>
+        <div id="syncStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;min-height:18px;"></div>
+      </div>
+      <div class="settings-group">
         <h3>Data</h3>
         <p>Tasks, projects, and inbox items are stored in your browser's localStorage.</p>
         <button class="btn btn-danger" onclick="if(confirm('Delete ALL data? This cannot be undone.')){localStorage.clear();location.reload();}">Clear All Data</button>
@@ -1559,6 +1586,7 @@ function saveState() {
   try {
     localStorage.setItem('thefunnel_state', JSON.stringify(state));
   } catch(e) { console.error('Failed to save state', e); }
+  if (typeof triggerAutoSync === 'function') triggerAutoSync();
 }
 
 function uuid() {
@@ -3020,10 +3048,142 @@ Return ONLY the HTML content, no markdown, no code fences.`;
 }
 
 // ===================== SETTINGS =====================
+// ===================== CLOUD SYNC (GitHub Gist) =====================
+function setSyncStatus(msg, isError) {
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = isError ? 'var(--danger)' : 'var(--success)'; }
+  updateSyncBtn(msg.includes('Syncing') ? 'syncing' : isError ? 'error' : 'ok');
+}
+
+function updateSyncBtn(status) {
+  const btn = document.getElementById('syncBtn');
+  if (!btn) return;
+  btn.classList.remove('syncing', 'sync-error', 'sync-ok');
+  if (status === 'syncing') btn.classList.add('syncing');
+  else if (status === 'error') btn.classList.add('sync-error');
+  else if (status === 'ok') { btn.classList.add('sync-ok'); setTimeout(() => btn.classList.remove('sync-ok'), 3000); }
+}
+
+function getSyncData() {
+  return JSON.stringify({
+    tasks: state.tasks,
+    projects: state.projects,
+    inbox: state.inbox,
+    syncedAt: new Date().toISOString()
+  });
+}
+
+async function syncPush() {
+  const token = document.getElementById('settingsSyncToken')?.value?.trim() || state.settings.syncToken;
+  if (!token) { setSyncStatus('Set your GitHub token first.', true); return; }
+
+  // Save token if entered in settings
+  state.settings.syncToken = token;
+  const gistId = document.getElementById('settingsSyncGistId')?.value?.trim() || state.settings.syncGistId;
+  setSyncStatus('Syncing... pushing data to cloud', false);
+
+  try {
+    const body = {
+      description: 'The Funnel - Sync Data (do not edit manually)',
+      public: false,
+      files: { 'funnel-data.json': { content: getSyncData() } }
+    };
+
+    let resp;
+    if (gistId) {
+      resp = await fetch('https://api.github.com/gists/' + gistId, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      resp = await fetch('https://api.github.com/gists', {
+        method: 'POST',
+        headers: { 'Authorization': 'token ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    }
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || resp.statusText);
+    }
+
+    const data = await resp.json();
+    state.settings.syncGistId = data.id;
+    state.settings.syncToken = token;
+    if (document.getElementById('settingsSyncGistId')) {
+      document.getElementById('settingsSyncGistId').value = data.id;
+    }
+    saveState();
+    setSyncStatus('Pushed successfully at ' + new Date().toLocaleTimeString(), false);
+  } catch (e) {
+    setSyncStatus('Push failed: ' + e.message, true);
+  }
+}
+
+async function syncPull() {
+  const token = document.getElementById('settingsSyncToken')?.value?.trim() || state.settings.syncToken;
+  const gistId = document.getElementById('settingsSyncGistId')?.value?.trim() || state.settings.syncGistId;
+  if (!token) { setSyncStatus('Set your GitHub token first.', true); return; }
+  if (!gistId) { setSyncStatus('No Gist ID yet. Push first from another device.', true); return; }
+
+  setSyncStatus('Syncing... pulling data from cloud', false);
+
+  try {
+    const resp = await fetch('https://api.github.com/gists/' + gistId, {
+      headers: { 'Authorization': 'token ' + token }
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      throw new Error(err.message || resp.statusText);
+    }
+
+    const gist = await resp.json();
+    const file = gist.files['funnel-data.json'];
+    if (!file) throw new Error('Sync file not found in Gist');
+
+    const cloudData = JSON.parse(file.content);
+    state.tasks = cloudData.tasks || [];
+    state.projects = cloudData.projects || [];
+    state.inbox = cloudData.inbox || [];
+    state.settings.syncToken = token;
+    state.settings.syncGistId = gistId;
+    saveState();
+    render();
+    setSyncStatus('Pulled successfully at ' + new Date().toLocaleTimeString() + ' (' + state.tasks.length + ' tasks)', false);
+  } catch (e) {
+    setSyncStatus('Pull failed: ' + e.message, true);
+  }
+}
+
+async function syncNow() {
+  const token = state.settings.syncToken;
+  const gistId = state.settings.syncGistId;
+  if (!token || !gistId) { openSettings(); return; }
+  setSyncStatus('Syncing...', false);
+  await syncPush();
+}
+
+// Auto-sync: debounced push after data changes
+let syncDebounceTimer = null;
+const origSaveState = typeof saveState === 'function' ? saveState : null;
+
+function triggerAutoSync() {
+  if (!state.settings.syncToken || !state.settings.syncGistId) return;
+  clearTimeout(syncDebounceTimer);
+  syncDebounceTimer = setTimeout(() => {
+    syncPush();
+  }, 15000); // 15 seconds after last change
+}
+
 function openSettings() {
   document.getElementById('settingsApiUrl').value = state.settings.apiUrl || '';
   document.getElementById('settingsApiKey').value = state.settings.apiKey || '';
   document.getElementById('settingsModel').value = state.settings.model || '';
+  document.getElementById('settingsSyncToken').value = state.settings.syncToken || '';
+  document.getElementById('settingsSyncGistId').value = state.settings.syncGistId || '';
+  document.getElementById('syncStatus').textContent = '';
   document.getElementById('settingsModal').classList.add('open');
 }
 
@@ -3035,6 +3195,8 @@ function saveSettings() {
   state.settings.apiUrl = document.getElementById('settingsApiUrl').value.trim();
   state.settings.apiKey = document.getElementById('settingsApiKey').value.trim();
   state.settings.model = document.getElementById('settingsModel').value.trim();
+  state.settings.syncToken = document.getElementById('settingsSyncToken').value.trim();
+  state.settings.syncGistId = document.getElementById('settingsSyncGistId').value.trim();
   saveState();
   closeSettings();
 }
@@ -3655,6 +3817,11 @@ if (!isMobile() && !state.prefs.sidebarOpen) {
 }
 
 render();
+
+// Auto-pull from cloud on load if sync is configured
+if (state.settings.syncToken && state.settings.syncGistId) {
+  syncPull().catch(() => {});
+}
 
 // Auto-show morning brief once per day
 checkAutoMorningBrief();
