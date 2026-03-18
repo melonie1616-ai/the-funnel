@@ -400,17 +400,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .task-list-container {
   flex:1; overflow-y:auto; padding:20px 24px;
 }
-.project-header-bar {
-  background: var(--accent-light);
-  border:1px solid var(--border);
-  border-radius: var(--radius);
-  padding:16px 20px;
-  margin-bottom:16px;
-}
-.project-header-bar h3 { font-size:16px; font-weight:700; margin-bottom:4px; }
-.project-header-bar .project-desc { font-size:13px; color:var(--text-muted); white-space:pre-wrap; }
-.project-header-bar .project-progress { font-size:12px; color:var(--text-muted); margin-top:6px; }
-
 .group-header {
   display:flex; align-items:center; gap:8px;
   padding:10px 0 6px; margin-top:12px; cursor:pointer;
@@ -492,10 +481,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   padding:2px 8px; border-radius:12px; font-size:10px;
   background:var(--warning-light); color:var(--warning); font-weight:700;
   border:1px solid rgba(245,158,11,0.3);
-}
-.project-badge {
-  padding:2px 8px; border-radius:12px; font-size:10px;
-  background:var(--success-light); color:var(--success); font-weight:600; border:1px solid rgba(16,185,129,0.3);
 }
 .task-notes-preview {
   font-size:12px; color:var(--text-muted); margin-top:6px;
@@ -980,7 +965,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   .task-card { padding:12px 12px; gap:10px; }
   .task-title { font-size:13px; }
   .task-meta { gap:4px; }
-  .priority-badge, .cat-badge, .waiting-badge, .project-badge { font-size:9px; padding:1px 6px; }
+  .priority-badge, .cat-badge, .waiting-badge { font-size:9px; padding:1px 6px; }
   .date-badge { font-size:10px; }
 
   /* Focus button hidden on mobile (too small) */
@@ -1096,13 +1081,10 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     </div>
 
     <div class="sidebar-section">
-      <div class="sidebar-heading">Projects</div>
-      <div id="projectList"></div>
-      <button class="sidebar-add-btn" onclick="openProjectModal()">+ Add Project</button>
-    </div>
-
-    <div class="sidebar-section">
-      <div class="sidebar-heading">Categories</div>
+      <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
+        Categories
+        <button class="sidebar-add-btn" onclick="openCategoryModal()" style="padding:0;width:auto;font-size:16px;line-height:1;" title="Manage categories">&#9881;</button>
+      </div>
       <div id="categoryList"></div>
     </div>
   </div>
@@ -1149,7 +1131,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
           <option value="date" selected>Date</option>
           <option value="category">Category</option>
           <option value="priority">Priority</option>
-          <option value="project">Project</option>
         </select>
       </div>
       <div class="toolbar-group">
@@ -1174,7 +1155,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
             <option value="priority:low">3-Low</option>
           </optgroup>
           <optgroup label="Category" id="filterCategoryOpts"></optgroup>
-          <optgroup label="Project" id="filterProjectOpts"></optgroup>
           <optgroup label="Date">
             <option value="date:overdue">Overdue</option>
             <option value="date:today">Today</option>
@@ -1252,12 +1232,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>Project</label>
-          <select id="taskProjectInput">
-            <option value="">None</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label>Due Date</label>
           <input type="date" id="taskDueDateInput">
           <div class="quick-date-btns">
@@ -1323,27 +1297,22 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 </div>
 
-<!-- PROJECT MODAL -->
-<div class="modal-overlay" id="projectModal">
+<!-- CATEGORY MANAGEMENT MODAL -->
+<div class="modal-overlay" id="categoryModal">
   <div class="modal" style="width:480px">
     <div class="modal-header">
-      <h2 id="projectModalTitle">Add Project</h2>
-      <button class="modal-close" onclick="closeProjectModal()">&times;</button>
+      <h2>Manage Categories</h2>
+      <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
     </div>
     <div class="modal-body">
-      <div class="form-group">
-        <label>Project Name</label>
-        <input type="text" id="projectNameInput" placeholder="e.g. Phoenix">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="text" id="newCategoryInput" placeholder="New category name..." onkeydown="if(event.key==='Enter')addCategory()" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;">
+        <button class="btn btn-primary" onclick="addCategory()">Add</button>
       </div>
-      <div class="form-group">
-        <label>Description / Notes</label>
-        <textarea id="projectDescInput" placeholder="Goals, stakeholders, links to plans..." style="min-height:120px"></textarea>
-      </div>
+      <div id="categoryManageList"></div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeProjectModal()">Cancel</button>
-      <button class="btn btn-danger" id="deleteProjectBtn" onclick="deleteProject()" style="display:none">Delete</button>
-      <button class="btn btn-primary" onclick="saveProject()">Save</button>
+      <button class="btn btn-secondary" onclick="closeCategoryModal()">Done</button>
     </div>
   </div>
 </div>
@@ -1364,10 +1333,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         <div class="form-group">
           <label>Default Category</label>
           <input type="text" id="meetingDefaultCategory" list="categoryDatalist" placeholder="Optional">
-        </div>
-        <div class="form-group">
-          <label>Default Project</label>
-          <select id="meetingDefaultProject"><option value="">None</option></select>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
@@ -1541,12 +1506,13 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 <script>
 // ===================== STATE =====================
-const DEFAULT_CATEGORIES = ['VMO','CDO Core','SW','Data team','Communications','MDM','Onboarding','ADR/CTO','My Stuff'];
+const INITIAL_CATEGORIES = ['VMO','CDO Core','SW','Data team','Communications','MDM','Onboarding','ADR/CTO','My Stuff'];
 
 let state = {
   tasks: [],
-  projects: [],
   inbox: [],
+  customCategories: [],
+  removedCategories: [],
   settings: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     apiKey: '',
@@ -1565,7 +1531,6 @@ let state = {
 };
 
 let editingTaskId = null;
-let editingProjectId = null;
 
 // ===================== PERSISTENCE =====================
 function loadState() {
@@ -1574,8 +1539,9 @@ function loadState() {
     if (saved) {
       const parsed = JSON.parse(saved);
       state.tasks = parsed.tasks || [];
-      state.projects = parsed.projects || [];
       state.inbox = parsed.inbox || [];
+      state.customCategories = parsed.customCategories || [];
+      state.removedCategories = parsed.removedCategories || [];
       state.settings = { ...state.settings, ...(parsed.settings || {}) };
       state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
     }
@@ -1637,7 +1603,10 @@ function formatDate(d) {
 
 // ===================== CATEGORIES =====================
 function getAllCategories() {
-  const cats = new Set(DEFAULT_CATEGORIES);
+  const cats = new Set();
+  const removed = new Set(state.removedCategories || []);
+  INITIAL_CATEGORIES.forEach(c => { if (!removed.has(c)) cats.add(c); });
+  if (state.customCategories) state.customCategories.forEach(c => cats.add(c));
   state.tasks.forEach(t => { if (t.category) cats.add(t.category); });
   return [...cats].sort();
 }
@@ -1666,7 +1635,6 @@ function getFilteredTasks() {
       const [type, val] = f.split(':');
       if (type === 'priority') tasks = tasks.filter(t => t.priority === val);
       else if (type === 'category') tasks = tasks.filter(t => t.category === val);
-      else if (type === 'project') tasks = tasks.filter(t => t.projectId === val);
       else if (type === 'date') {
         if (val === 'overdue') tasks = tasks.filter(t => isOverdue(t.dueDate));
         else if (val === 'today') tasks = tasks.filter(t => isToday(t.dueDate));
@@ -1692,9 +1660,6 @@ function getFilteredTasks() {
     tasks = tasks.filter(t => t.completed);
   } else if (view === 'all') {
     tasks = tasks.filter(t => !t.completed);
-  } else if (view.startsWith('project:')) {
-    const pid = view.slice(8);
-    tasks = tasks.filter(t => t.projectId === pid && !t.completed);
   } else if (view.startsWith('category:')) {
     const cat = view.slice(9);
     tasks = tasks.filter(t => t.category === cat && !t.completed);
@@ -1705,7 +1670,6 @@ function getFilteredTasks() {
     const [type, val] = f.split(':');
     if (type === 'priority') tasks = tasks.filter(t => t.priority === val);
     else if (type === 'category') tasks = tasks.filter(t => t.category === val);
-    else if (type === 'project') tasks = tasks.filter(t => t.projectId === val);
     else if (type === 'date') {
       if (val === 'overdue') tasks = tasks.filter(t => isOverdue(t.dueDate));
       else if (val === 'today') tasks = tasks.filter(t => isToday(t.dueDate));
@@ -1761,13 +1725,6 @@ function groupTasks(tasks) {
       key = t.category || 'Uncategorized';
     } else if (groupBy === 'priority') {
       key = PRIORITY_LABELS[t.priority || 'none'];
-    } else if (groupBy === 'project') {
-      if (t.projectId) {
-        const p = state.projects.find(p => p.id === t.projectId);
-        key = p ? p.name : 'Unknown Project';
-      } else {
-        key = 'No Project';
-      }
     }
     if (!groups[key]) groups[key] = [];
     groups[key].push(t);
@@ -1806,27 +1763,11 @@ function render() {
   tasks = sortTasks(tasks);
   const groups = groupTasks(tasks);
 
-  // Project header
-  let projectHeaderHtml = '';
-  if (view.startsWith('project:')) {
-    const pid = view.slice(8);
-    const proj = state.projects.find(p => p.id === pid);
-    if (proj) {
-      const total = state.tasks.filter(t => t.projectId === pid).length;
-      const done = state.tasks.filter(t => t.projectId === pid && t.completed).length;
-      projectHeaderHtml = `<div class="project-header-bar">
-        <h3>${esc(proj.name)}</h3>
-        ${proj.description ? `<div class="project-desc">${esc(proj.description)}</div>` : ''}
-        <div class="project-progress">${done} of ${total} tasks complete</div>
-      </div>`;
-    }
-  }
-
   if (tasks.length === 0) {
     const msg = searchTerm
       ? `<div class="empty-state"><h3>No results for "${esc(searchTerm)}"</h3><p>Try a different search term, or clear the search box.</p></div>`
       : `<div class="empty-state"><h3>No tasks match</h3><p>Try adjusting your filters, or press <strong>N</strong> to add a task.</p></div>`;
-    container.innerHTML = projectHeaderHtml + msg;
+    container.innerHTML = msg;
     return;
   }
 
@@ -1848,8 +1789,6 @@ function render() {
       <button onclick="document.getElementById('searchInput').value='';onSearch();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;">Clear search</button>
     </div>`;
   }
-
-  html += projectHeaderHtml;
 
   groups.forEach(g => {
     const isCollapsed = state.prefs.collapsedGroups[g.name];
@@ -1873,7 +1812,6 @@ function render() {
 function renderTaskCard(t) {
   const overdue = !t.completed && isOverdue(t.dueDate);
   const today = !t.completed && isToday(t.dueDate);
-  const proj = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
   const subtaskDone = t.subtasks ? t.subtasks.filter(s => s.completed).length : 0;
   const subtaskTotal = t.subtasks ? t.subtasks.length : 0;
 
@@ -1893,7 +1831,6 @@ function renderTaskCard(t) {
       <div class="task-meta">
         <span class="priority-badge ${t.priority || 'none'}">${PRIORITY_LABELS[t.priority||'none']}</span>
         ${t.category ? `<span class="cat-badge">${esc(t.category)}</span>` : ''}
-        ${proj ? `<span class="project-badge">${esc(proj.name)}</span>` : ''}
         ${t.dueDate ? `<span class="date-badge ${overdue ? 'overdue' : ''} ${today ? 'today' : ''}">${formatDate(t.dueDate)}</span>` : ''}
         ${subtaskTotal > 0 ? `<span class="subtask-progress">&#9745; ${subtaskDone}/${subtaskTotal}</span>` : ''}
         ${t.recurrence ? `<span class="recurring-icon" title="Recurring: ${t.recurrence.startsWith('every:') ? 'every '+t.recurrence.split(':')[1]+' days' : t.recurrence}">&#128260;</span>` : ''}
@@ -1969,16 +1906,6 @@ function updateCounts() {
 
 // ===================== SIDEBAR =====================
 function updateSidebar() {
-  // Projects
-  const pl = document.getElementById('projectList');
-  pl.innerHTML = state.projects.map(p => {
-    const count = state.tasks.filter(t => t.projectId === p.id && !t.completed).length;
-    const isActive = state.prefs.currentView === 'project:' + p.id;
-    return `<div class="sidebar-item ${isActive?'active':''}" onclick="switchView('project:${p.id}')">
-      &#128194; ${esc(p.name)} <span class="count">${count}</span>
-    </div>`;
-  }).join('');
-
   // Categories
   const cl = document.getElementById('categoryList');
   const cats = getAllCategories();
@@ -2003,11 +1930,9 @@ function updateToolbar() {
   document.getElementById('viewCard').classList.toggle('active', state.prefs.viewMode === 'card');
   document.getElementById('viewCompact').classList.toggle('active', state.prefs.viewMode === 'compact');
 
-  // Update filter category/project options
+  // Update filter category options
   const catOpts = document.getElementById('filterCategoryOpts');
   catOpts.innerHTML = getAllCategories().map(c => `<option value="category:${esc(c)}">${esc(c)}</option>`).join('');
-  const projOpts = document.getElementById('filterProjectOpts');
-  projOpts.innerHTML = state.projects.map(p => `<option value="project:${p.id}">${esc(p.name)}</option>`).join('');
 }
 
 function updateFilterChips() {
@@ -2017,10 +1942,6 @@ function updateFilterChips() {
     const [type, val] = f.split(':');
     if (type === 'priority') label = 'Priority: ' + (PRIORITY_LABELS[val] || val);
     else if (type === 'category') label = 'Category: ' + val;
-    else if (type === 'project') {
-      const p = state.projects.find(p => p.id === val);
-      label = 'Project: ' + (p ? p.name : val);
-    }
     else if (type === 'date') {
       const names = { overdue:'Overdue', today:'Today', week:'Next 7 Days', nodate:'No Date' };
       label = names[val] || val;
@@ -2109,12 +2030,6 @@ function openTaskModal(taskId) {
   const title = document.getElementById('taskModalTitle');
   const delBtn = document.getElementById('deleteTaskBtn');
 
-  // Populate project dropdown
-  const projSelect = document.getElementById('taskProjectInput');
-  projSelect.innerHTML = '<option value="">None</option>' + state.projects.map(p =>
-    `<option value="${p.id}">${esc(p.name)}</option>`
-  ).join('');
-
   // Populate category datalist
   const dl = document.getElementById('categoryDatalist');
   dl.innerHTML = getAllCategories().map(c => `<option value="${esc(c)}">`).join('');
@@ -2128,7 +2043,6 @@ function openTaskModal(taskId) {
     document.getElementById('taskNotesInput').value = t.notes || '';
     document.getElementById('taskPriorityInput').value = t.priority || 'none';
     document.getElementById('taskCategoryInput').value = t.category || '';
-    document.getElementById('taskProjectInput').value = t.projectId || '';
     document.getElementById('taskDueDateInput').value = t.dueDate || '';
     setRecurrenceUI(t.recurrence);
     document.getElementById('taskWaitingOnInput').value = t.waitingOn || '';
@@ -2140,7 +2054,6 @@ function openTaskModal(taskId) {
     document.getElementById('taskNotesInput').value = '';
     document.getElementById('taskPriorityInput').value = 'none';
     document.getElementById('taskCategoryInput').value = '';
-    document.getElementById('taskProjectInput').value = '';
     document.getElementById('taskDueDateInput').value = '';
     setRecurrenceUI(null);
     document.getElementById('taskWaitingOnInput').value = '';
@@ -2212,7 +2125,6 @@ function saveTask() {
     notes: document.getElementById('taskNotesInput').value,
     priority: document.getElementById('taskPriorityInput').value,
     category: document.getElementById('taskCategoryInput').value.trim(),
-    projectId: document.getElementById('taskProjectInput').value || null,
     dueDate: document.getElementById('taskDueDateInput').value || null,
     recurrence: getRecurrenceValue(),
     waitingOn: document.getElementById('taskWaitingOnInput').value.trim() || null,
@@ -2435,59 +2347,88 @@ function deleteInboxItem(id) {
 }
 
 // ===================== PROJECTS =====================
-function openProjectModal(projectId) {
-  editingProjectId = projectId || null;
-  const modal = document.getElementById('projectModal');
-  const title = document.getElementById('projectModalTitle');
-  const delBtn = document.getElementById('deleteProjectBtn');
-
-  if (editingProjectId) {
-    const p = state.projects.find(p => p.id === editingProjectId);
-    if (!p) return;
-    title.textContent = 'Edit Project';
-    delBtn.style.display = '';
-    document.getElementById('projectNameInput').value = p.name;
-    document.getElementById('projectDescInput').value = p.description || '';
-  } else {
-    title.textContent = 'Add Project';
-    delBtn.style.display = 'none';
-    document.getElementById('projectNameInput').value = '';
-    document.getElementById('projectDescInput').value = '';
-  }
-
-  modal.classList.add('open');
-  setTimeout(() => document.getElementById('projectNameInput').focus(), 100);
+// ===================== CATEGORY MANAGEMENT =====================
+function openCategoryModal() {
+  document.getElementById('newCategoryInput').value = '';
+  renderCategoryManageList();
+  document.getElementById('categoryModal').classList.add('open');
+  setTimeout(() => document.getElementById('newCategoryInput').focus(), 100);
 }
 
-function closeProjectModal() {
-  document.getElementById('projectModal').classList.remove('open');
-  editingProjectId = null;
-}
-
-function saveProject() {
-  const name = document.getElementById('projectNameInput').value.trim();
-  if (!name) { alert('Project name is required.'); return; }
-  const desc = document.getElementById('projectDescInput').value;
-
-  if (editingProjectId) {
-    const p = state.projects.find(p => p.id === editingProjectId);
-    if (p) { p.name = name; p.description = desc; }
-  } else {
-    state.projects.push({ id: uuid(), name, description: desc, createdAt: new Date().toISOString() });
-  }
-  saveState();
-  closeProjectModal();
+function closeCategoryModal() {
+  document.getElementById('categoryModal').classList.remove('open');
   render();
 }
 
-function deleteProject() {
-  if (!editingProjectId) return;
-  if (!confirm('Delete this project? Tasks will be unassigned but not deleted.')) return;
-  state.tasks.forEach(t => { if (t.projectId === editingProjectId) t.projectId = null; });
-  state.projects = state.projects.filter(p => p.id !== editingProjectId);
-  if (state.prefs.currentView === 'project:' + editingProjectId) state.prefs.currentView = 'all';
+function renderCategoryManageList() {
+  const cats = getAllCategories();
+  const list = document.getElementById('categoryManageList');
+  if (cats.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No categories yet.</p>';
+    return;
+  }
+  list.innerHTML = cats.map(c => {
+    const taskCount = state.tasks.filter(t => t.category === c).length;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px;">
+      <span style="flex:1;font-size:13px;font-weight:500;">${esc(c)}</span>
+      <span style="font-size:11px;color:var(--text-muted);">${taskCount} task${taskCount!==1?'s':''}</span>
+      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="renameCategory('${esc(c).replace(/'/g,"\\'")}')">Rename</button>
+      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;color:var(--danger);" onclick="deleteCategory('${esc(c).replace(/'/g,"\\'")}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+function addCategory() {
+  const input = document.getElementById('newCategoryInput');
+  const name = input.value.trim();
+  if (!name) return;
+  if (getAllCategories().includes(name)) { alert('Category already exists.'); return; }
+  if (!state.customCategories) state.customCategories = [];
+  state.customCategories.push(name);
   saveState();
-  closeProjectModal();
+  input.value = '';
+  renderCategoryManageList();
+  render();
+}
+
+function renameCategory(oldName) {
+  const newName = prompt('Rename "' + oldName + '" to:', oldName);
+  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
+  const trimmed = newName.trim();
+  state.tasks.forEach(t => { if (t.category === oldName) t.category = trimmed; });
+  if (INITIAL_CATEGORIES.includes(oldName)) {
+    if (!state.removedCategories) state.removedCategories = [];
+    state.removedCategories.push(oldName);
+    if (!state.customCategories) state.customCategories = [];
+    state.customCategories.push(trimmed);
+  }
+  if (state.customCategories) {
+    const idx = state.customCategories.indexOf(oldName);
+    if (idx >= 0) state.customCategories[idx] = trimmed;
+  }
+  if (state.prefs.currentView === 'category:' + oldName) state.prefs.currentView = 'category:' + trimmed;
+  saveState();
+  renderCategoryManageList();
+  render();
+}
+
+function deleteCategory(name) {
+  const taskCount = state.tasks.filter(t => t.category === name).length;
+  const msg = taskCount > 0
+    ? `Delete "${name}"? ${taskCount} task(s) will have their category cleared.`
+    : `Delete "${name}"?`;
+  if (!confirm(msg)) return;
+  state.tasks.forEach(t => { if (t.category === name) t.category = ''; });
+  if (INITIAL_CATEGORIES.includes(name)) {
+    if (!state.removedCategories) state.removedCategories = [];
+    if (!state.removedCategories.includes(name)) state.removedCategories.push(name);
+  }
+  if (state.customCategories) {
+    state.customCategories = state.customCategories.filter(c => c !== name);
+  }
+  if (state.prefs.currentView === 'category:' + name) state.prefs.currentView = 'all';
+  saveState();
+  renderCategoryManageList();
   render();
 }
 
@@ -2496,10 +2437,6 @@ function openMeetingNotes() {
   const modal = document.getElementById('meetingNotesModal');
   document.getElementById('meetingNotesText').value = '';
   document.getElementById('meetingDefaultCategory').value = '';
-  const projSel = document.getElementById('meetingDefaultProject');
-  projSel.innerHTML = '<option value="">None</option>' + state.projects.map(p =>
-    `<option value="${p.id}">${esc(p.name)}</option>`
-  ).join('');
   document.getElementById('extractedTasksContainer').style.display = 'none';
   document.getElementById('extractedTasksList').innerHTML = '';
 
@@ -2592,9 +2529,8 @@ async function extractTasksAI() {
   if (!apiKey) { alert('Configure your API key in Settings first.'); return; }
 
   const cats = getAllCategories().join(', ');
-  const projs = state.projects.map(p => p.name).join(', ');
 
-  const prompt = `Extract action items/tasks from the following meeting notes. Return a JSON array of objects with: title (string), priority (high/medium/low/none), category (one of: ${cats}, or suggest new), project (one of: ${projs}, or null), dueDate (YYYY-MM-DD or null). Only return the JSON array, no other text.\n\nMeeting notes:\n${text}`;
+  const prompt = `Extract action items/tasks from the following meeting notes. Return a JSON array of objects with: title (string), priority (high/medium/low/none), category (one of: ${cats}, or suggest new), dueDate (YYYY-MM-DD or null). Only return the JSON array, no other text.\n\nMeeting notes:\n${text}`;
 
   try {
     const btn = document.getElementById('aiExtractBtn');
@@ -2621,7 +2557,6 @@ async function extractTasksAI() {
       title: item.title || '',
       priority: item.priority || 'none',
       category: item.category || '',
-      projectName: item.project || '',
       suggestedDate: item.dueDate || null,
       selected: true
     }));
@@ -2640,13 +2575,10 @@ function renderExtractedTasks(candidates) {
   const container = document.getElementById('extractedTasksContainer');
   const list = document.getElementById('extractedTasksList');
   const defCat = document.getElementById('meetingDefaultCategory').value;
-  const defProj = document.getElementById('meetingDefaultProject').value;
   const cats = getAllCategories();
 
   list.innerHTML = candidates.map((c, i) => {
     const cat = c.category || defCat;
-    const projId = c.projectName ? (state.projects.find(p => p.name === c.projectName)?.id || defProj) : defProj;
-
     return `<div class="extracted-task-row" data-idx="${i}">
       <input type="checkbox" ${c.selected ? 'checked' : ''}>
       <input type="text" value="${esc(c.title)}">
@@ -2657,10 +2589,6 @@ function renderExtractedTasks(candidates) {
         <option value="low" ${c.priority==='low'?'selected':''}>3-Low</option>
       </select>
       <input type="text" value="${esc(cat)}" list="categoryDatalist" placeholder="Category" style="width:100px;">
-      <select class="ext-project">
-        <option value="">None</option>
-        ${state.projects.map(p => `<option value="${p.id}" ${p.id===projId?'selected':''}>${esc(p.name)}</option>`).join('')}
-      </select>
       <input type="date" value="${c.suggestedDate || ''}" style="width:130px;">
     </div>`;
   }).join('');
@@ -2686,11 +2614,10 @@ function addExtractedTasks() {
     if (!title) return;
     const priority = row.querySelector('.ext-priority').value;
     const category = inputs[1].value.trim();
-    const projectId = row.querySelector('.ext-project').value || null;
     const dueDate = row.querySelector('input[type="date"]').value || null;
 
     state.tasks.push({
-      id: uuid(), title, notes: '', priority, category, projectId,
+      id: uuid(), title, notes: '', priority, category,
       dueDate, recurrence: null, subtasks: [],
       completed: false, completedAt: null,
       createdAt: new Date().toISOString()
@@ -2975,8 +2902,7 @@ async function generateDayPlan() {
   // Gather today's tasks
   const todayTasks = state.tasks.filter(t => !t.completed && (isToday(t.dueDate) || isOverdue(t.dueDate)));
   const taskList = todayTasks.map(t => {
-    const p = t.projectId ? state.projects.find(p => p.id === t.projectId) : null;
-    return `- [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.category ? ' ('+t.category+')' : ''}${p ? ' [Project: '+p.name+']' : ''}${t.notes ? ' -- Notes: '+t.notes : ''}`;
+    return `- [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.category ? ' ('+t.category+')' : ''}${t.notes ? ' -- Notes: '+t.notes : ''}`;
   }).join('\n');
 
   const prompt = `You are a personal productivity assistant. I'm sharing a screenshot of my calendar for today and my task list.
@@ -3067,8 +2993,9 @@ function updateSyncBtn(status) {
 function getSyncData() {
   return JSON.stringify({
     tasks: state.tasks,
-    projects: state.projects,
     inbox: state.inbox,
+    customCategories: state.customCategories || [],
+    removedCategories: state.removedCategories || [],
     syncedAt: new Date().toISOString()
   });
 }
@@ -3145,8 +3072,9 @@ async function syncPull() {
 
     const cloudData = JSON.parse(file.content);
     state.tasks = cloudData.tasks || [];
-    state.projects = cloudData.projects || [];
     state.inbox = cloudData.inbox || [];
+    state.customCategories = cloudData.customCategories || [];
+    state.removedCategories = cloudData.removedCategories || [];
     state.settings.syncToken = token;
     state.settings.syncGistId = gistId;
     saveState();
@@ -3203,7 +3131,7 @@ function saveSettings() {
 
 // ===================== EXPORT / IMPORT =====================
 function exportData() {
-  const data = JSON.stringify({ tasks: state.tasks, projects: state.projects, inbox: state.inbox }, null, 2);
+  const data = JSON.stringify({ tasks: state.tasks, inbox: state.inbox, customCategories: state.customCategories || [], removedCategories: state.removedCategories || [] }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -3223,8 +3151,9 @@ function importData(event) {
     try {
       const data = JSON.parse(e.target.result);
       if (data.tasks) state.tasks = data.tasks;
-      if (data.projects) state.projects = data.projects;
       if (data.inbox) state.inbox = data.inbox;
+      if (data.customCategories) state.customCategories = data.customCategories;
+      if (data.removedCategories) state.removedCategories = data.removedCategories;
       saveState();
       render();
       alert('Data imported successfully.');
@@ -3265,7 +3194,6 @@ document.addEventListener('keydown', function(e) {
   else if (e.key === '2') { state.prefs.groupBy='date'; saveState(); render(); }
   else if (e.key === '3') { state.prefs.groupBy='category'; saveState(); render(); }
   else if (e.key === '4') { state.prefs.groupBy='priority'; saveState(); render(); }
-  else if (e.key === '5') { state.prefs.groupBy='project'; saveState(); render(); }
 });
 
 function closeAllModals() {
