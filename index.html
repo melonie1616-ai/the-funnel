@@ -75,6 +75,122 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
 }
+/* ===================== WORK STREAMS ===================== */
+.area-dot {
+  display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0;
+}
+.sidebar-area-header {
+  display:flex; align-items:center; padding:6px 16px; cursor:pointer;
+  font-size:12px; font-weight:600; color:var(--text-sidebar); letter-spacing:0.3px;
+  text-transform:uppercase; user-select:none; transition:color 0.15s;
+}
+.sidebar-area-header:hover { color:var(--text-sidebar-active); }
+.sidebar-area-header .area-toggle {
+  margin-left:auto; font-size:10px; transition:transform 0.2s; opacity:0.5;
+}
+.sidebar-area-header.expanded .area-toggle { transform:rotate(90deg); }
+.sidebar-ws-list { overflow:hidden; transition:max-height 0.25s ease; }
+.sidebar-ws-item {
+  display:flex; align-items:center; padding:5px 16px 5px 32px;
+  font-size:12px; color:var(--text-sidebar); cursor:pointer;
+  transition:background 0.15s, color 0.15s; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.sidebar-ws-item:hover { background:var(--bg-sidebar-hover); color:var(--text-sidebar-active); }
+.sidebar-ws-item.active { background:var(--bg-sidebar-active); color:var(--text-sidebar-active); font-weight:600; }
+.sidebar-ws-item .ws-count {
+  margin-left:auto; font-size:10px; background:rgba(255,255,255,0.1);
+  padding:1px 6px; border-radius:8px; min-width:18px; text-align:center;
+}
+.sidebar-add-ws {
+  padding:4px 16px 4px 32px; font-size:11px; color:var(--accent);
+  cursor:pointer; opacity:0.7; transition:opacity 0.15s;
+}
+.sidebar-add-ws:hover { opacity:1; }
+
+/* Work stream detail view */
+.ws-detail { padding:24px; max-width:900px; }
+.ws-detail-header {
+  display:flex; align-items:flex-start; gap:16px; margin-bottom:24px;
+}
+.ws-detail-header h2 { font-size:22px; font-weight:700; flex:1; }
+.ws-detail-badges { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px; }
+.ws-badge {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;
+}
+.ws-badge-area { background:var(--accent-light); color:var(--accent); }
+.ws-badge-cadence { background:var(--warning-light); color:#b45309; }
+.ws-badge-owner { background:var(--success-light); color:#047857; }
+.ws-badge-status { background:var(--bg); color:var(--text-muted); border:1px solid var(--border); }
+
+.ws-section { margin-bottom:28px; }
+.ws-section-title {
+  font-size:13px; font-weight:700; text-transform:uppercase; letter-spacing:0.5px;
+  color:var(--text-muted); margin-bottom:10px; display:flex; align-items:center; gap:8px;
+}
+.ws-section-title button {
+  font-size:11px; background:none; border:1px solid var(--border); color:var(--accent);
+  padding:2px 8px; border-radius:4px; cursor:pointer;
+}
+
+.ws-notes-editor {
+  width:100%; min-height:120px; padding:12px 14px; font-size:14px; line-height:1.6;
+  border:1px solid var(--border); border-radius:var(--radius-sm);
+  background:var(--bg); color:var(--text); resize:vertical; outline:none;
+  font-family:inherit;
+}
+.ws-notes-editor:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+
+.ws-checklist-item {
+  display:flex; align-items:center; gap:8px; padding:6px 0;
+  border-bottom:1px solid var(--border); font-size:14px;
+}
+.ws-checklist-item:last-child { border-bottom:none; }
+.ws-checklist-item input[type="text"] {
+  flex:1; border:none; background:transparent; color:var(--text); font-size:14px;
+  outline:none; padding:4px 0; font-family:inherit;
+}
+.ws-checklist-item button {
+  background:none; border:none; color:var(--text-muted); cursor:pointer;
+  font-size:14px; opacity:0.5; transition:opacity 0.15s;
+}
+.ws-checklist-item button:hover { opacity:1; color:var(--danger); }
+
+/* Occurrence cards */
+.occ-list { display:flex; flex-direction:column; gap:8px; }
+.occ-card {
+  display:flex; align-items:center; gap:12px; padding:12px 14px;
+  background:var(--bg-card); border:1px solid var(--border);
+  border-radius:var(--radius-sm); cursor:pointer;
+  transition:box-shadow 0.15s, transform 0.15s;
+}
+.occ-card:hover { box-shadow:var(--shadow-md); transform:translateY(-1px); }
+.occ-card .occ-status {
+  width:20px; height:20px; border-radius:50%; border:2px solid var(--border);
+  flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  font-size:11px; cursor:pointer; transition:all 0.15s;
+}
+.occ-card .occ-status.done { background:var(--success); border-color:var(--success); color:#fff; }
+.occ-card .occ-status.in-progress { background:var(--accent); border-color:var(--accent); color:#fff; }
+.occ-card .occ-info { flex:1; min-width:0; }
+.occ-card .occ-title { font-size:14px; font-weight:500; }
+.occ-card .occ-meta { font-size:12px; color:var(--text-muted); display:flex; gap:8px; }
+.occ-card .occ-due { font-size:12px; font-weight:600; white-space:nowrap; }
+.occ-card .occ-due.overdue { color:var(--danger); }
+.occ-card .occ-due.today { color:var(--accent); }
+.occ-card .occ-progress { font-size:11px; color:var(--text-muted); }
+
+/* Work stream actions */
+.ws-actions { display:flex; gap:8px; }
+.ws-actions button {
+  padding:6px 14px; font-size:12px; font-weight:600; border-radius:var(--radius-sm);
+  cursor:pointer; border:1px solid var(--border); background:var(--bg-card);
+  color:var(--text); transition:all 0.15s;
+}
+.ws-actions button:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.ws-actions button.primary { background:var(--accent); color:#fff; border-color:var(--accent); }
+.ws-actions button.primary:hover { background:var(--accent-hover); }
+
 /* ===================== LOGIN SCREEN ===================== */
 .login-screen {
   display:flex; align-items:center; justify-content:center;
@@ -1179,6 +1295,14 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
     <div class="sidebar-section">
       <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
+        Work Streams
+        <button class="sidebar-add-btn" onclick="openWorkStreamModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Add work stream">&#10010;</button>
+      </div>
+      <div id="areaWorkStreamList"></div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
         Categories
         <button class="sidebar-add-btn" onclick="openCategoryModal()" style="padding:0;width:auto;font-size:16px;line-height:1;" title="Manage categories">&#9881;</button>
       </div>
@@ -1410,6 +1534,147 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCategoryModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- WORK STREAM MODAL -->
+<div class="modal-overlay" id="workStreamModal">
+  <div class="modal" style="width:580px">
+    <div class="modal-header">
+      <h2 id="wsModalTitle">Add Work Stream</h2>
+      <button class="modal-close" onclick="closeWorkStreamModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Name</label>
+        <input type="text" id="wsNameInput" placeholder="e.g. Data Literacy Videos">
+      </div>
+      <div class="form-group">
+        <label>Description</label>
+        <textarea id="wsDescInput" placeholder="What this work stream covers..." style="min-height:60px"></textarea>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Area</label>
+          <select id="wsAreaInput"></select>
+        </div>
+        <div class="form-group">
+          <label>Owner</label>
+          <select id="wsOwnerInput">
+            <option value="shared">Shared</option>
+            <option value="me">Me</option>
+            <option value="teammate">Teammate</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Cadence</label>
+          <select id="wsCadenceType" onchange="onWsCadenceChange()">
+            <option value="one-time">One-time</option>
+            <option value="daily">Daily</option>
+            <option value="weekly">Weekly</option>
+            <option value="xPerWeek">X times per week</option>
+            <option value="xPerMonth">X times per month</option>
+            <option value="monthly">Monthly</option>
+            <option value="quarterly">Quarterly</option>
+          </select>
+        </div>
+        <div class="form-group" id="wsCadenceTimesGroup" style="display:none">
+          <label>How many times?</label>
+          <input type="number" id="wsCadenceTimes" min="1" max="7" value="2">
+        </div>
+      </div>
+      <div class="form-group" id="wsCadenceDaysGroup" style="display:none">
+        <label>On which days?</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="wsCadenceDays">
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="mon"> Mon</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="tue"> Tue</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="wed"> Wed</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="thu"> Thu</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="fri"> Fri</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="sat"> Sat</label>
+          <label style="font-size:12px;display:flex;align-items:center;gap:3px;"><input type="checkbox" value="sun"> Sun</label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Checklist Template (one step per line)</label>
+        <textarea id="wsChecklistInput" placeholder="Step 1&#10;Step 2&#10;Step 3..." style="min-height:80px"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Status</label>
+        <select id="wsStatusInput">
+          <option value="active">Active</option>
+          <option value="paused">Paused</option>
+          <option value="completed">Completed</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeWorkStreamModal()">Cancel</button>
+      <button class="btn btn-danger" id="deleteWsBtn" onclick="deleteWorkStream()" style="display:none">Delete</button>
+      <button class="btn btn-primary" onclick="saveWorkStream()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- OCCURRENCE MODAL -->
+<div class="modal-overlay" id="occurrenceModal">
+  <div class="modal" style="width:520px">
+    <div class="modal-header">
+      <h2 id="occModalTitle">Edit Occurrence</h2>
+      <button class="modal-close" onclick="closeOccurrenceModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>Title</label>
+        <input type="text" id="occTitleInput">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Due Date</label>
+          <input type="date" id="occDueDateInput">
+        </div>
+        <div class="form-group">
+          <label>Status</label>
+          <select id="occStatusInput">
+            <option value="not-started">Not Started</option>
+            <option value="in-progress">In Progress</option>
+            <option value="done">Done</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Priority</label>
+          <select id="occPriorityInput">
+            <option value="none">None</option>
+            <option value="high">1-High</option>
+            <option value="medium">2-Medium</option>
+            <option value="low">3-Low</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Assignee</label>
+          <select id="occAssigneeInput">
+            <option value="">Unassigned</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Notes</label>
+        <textarea id="occNotesInput" placeholder="Notes for this occurrence..." style="min-height:80px"></textarea>
+      </div>
+      <div class="form-group" id="occChecklistGroup">
+        <label>Checklist</label>
+        <div id="occChecklistItems"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeOccurrenceModal()">Cancel</button>
+      <button class="btn btn-danger" id="deleteOccBtn" onclick="deleteOccurrence()" style="display:none">Delete</button>
+      <button class="btn btn-primary" onclick="saveOccurrence()">Save</button>
     </div>
   </div>
 </div>
@@ -1682,9 +1947,23 @@ function showLogin() {
 // ===================== STATE =====================
 const INITIAL_CATEGORIES = ['VMO','CDO Core','SW','Data team','Communications','MDM','Onboarding','ADR/CTO','My Stuff'];
 
+const DEFAULT_AREAS = [
+  { id: 'superworker', name: 'Superworker', color: '#8b5cf6' },
+  { id: 'builders', name: 'Builders', color: '#6366f1' },
+  { id: 'ai-program', name: 'AI Program', color: '#3b82f6' },
+  { id: 'data-program', name: 'Data Program', color: '#0ea5e9' },
+  { id: 'cdo-ops', name: 'CDO Operations', color: '#14b8a6' },
+  { id: 'devops-tools', name: 'DevOps / Tools', color: '#f59e0b' },
+  { id: 'people', name: 'People / Onboarding', color: '#ec4899' },
+  { id: 'vmo', name: 'VMO', color: '#ef4444' }
+];
+
 const DEFAULT_STATE = {
   tasks: [],
   inbox: [],
+  areas: [],
+  workStreams: [],
+  occurrences: [],
   customCategories: [],
   removedCategories: [],
   settings: {
@@ -1700,7 +1979,8 @@ const DEFAULT_STATE = {
     filters: [],
     currentView: 'today',
     sidebarOpen: true,
-    collapsedGroups: {}
+    collapsedGroups: {},
+    collapsedAreas: {}
   }
 };
 
@@ -1720,10 +2000,16 @@ async function loadState() {
       const data = doc.data();
       state.tasks = data.tasks || [];
       state.inbox = data.inbox || [];
+      state.areas = data.areas || [];
+      state.workStreams = data.workStreams || [];
+      state.occurrences = data.occurrences || [];
       state.customCategories = data.customCategories || [];
       state.removedCategories = data.removedCategories || [];
       state.settings = { ...state.settings, ...(data.settings || {}) };
       state.prefs = { ...state.prefs, ...(data.prefs || {}) };
+    }
+    if (state.areas.length === 0) {
+      state.areas = JSON.parse(JSON.stringify(DEFAULT_AREAS));
     }
   } catch(e) { console.error('Failed to load state from Firestore', e); }
 }
@@ -1745,6 +2031,9 @@ async function _saveToFirestore() {
     await getDocRef().set({
       tasks: state.tasks,
       inbox: state.inbox,
+      areas: state.areas,
+      workStreams: state.workStreams,
+      occurrences: state.occurrences,
       customCategories: state.customCategories,
       removedCategories: state.removedCategories,
       settings: state.settings,
@@ -1764,6 +2053,9 @@ function listenForChanges() {
         if (remoteUpdater && remoteUpdater !== currentUser.email) {
           state.tasks = data.tasks || [];
           state.inbox = data.inbox || [];
+          state.areas = data.areas || [];
+          state.workStreams = data.workStreams || [];
+          state.occurrences = data.occurrences || [];
           state.customCategories = data.customCategories || [];
           state.removedCategories = data.removedCategories || [];
           state.settings = { ...state.settings, ...(data.settings || {}) };
@@ -1993,9 +2285,22 @@ function render() {
   updateSidebar();
   updateToolbar();
   updateFilterChips();
+  updateAreaWorkStreamList();
 
   const container = document.getElementById('taskListContainer');
   const view = state.prefs.currentView;
+
+  // If viewing a work stream, show its detail instead of task list
+  if (view.startsWith('workstream:')) {
+    const wsId = view.slice(11);
+    showWorkStreamDetail(wsId);
+    return;
+  }
+
+  // Reset view elements for task views
+  currentWsView = null;
+  document.getElementById('toolbar').style.display = '';
+  document.getElementById('dashStats').style.display = '';
 
   const searchTerm = getSearchTerm();
 
@@ -2678,6 +2983,522 @@ function deleteCategory(name) {
   saveState();
   renderCategoryManageList();
   render();
+}
+
+// ===================== WORK STREAMS =====================
+let editingWsId = null;
+let editingOccId = null;
+let currentWsView = null;
+
+function getCadenceLabel(ws) {
+  if (!ws.cadence) return 'One-time';
+  const c = ws.cadence;
+  if (c.type === 'one-time') return 'One-time';
+  if (c.type === 'daily') return 'Daily';
+  if (c.type === 'weekly') return 'Weekly';
+  if (c.type === 'monthly') return 'Monthly';
+  if (c.type === 'quarterly') return 'Quarterly';
+  if (c.type === 'xPerWeek') return `${c.times}x / week`;
+  if (c.type === 'xPerMonth') return `${c.times}x / month`;
+  return c.type;
+}
+
+function getAreaById(id) {
+  return state.areas.find(a => a.id === id);
+}
+
+function getWorkStreamsByArea(areaId) {
+  return state.workStreams.filter(ws => ws.areaId === areaId && ws.status !== 'completed');
+}
+
+function getOccurrencesForWs(wsId) {
+  return state.occurrences.filter(o => o.workStreamId === wsId)
+    .sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+}
+
+function getActiveOccCount(wsId) {
+  return state.occurrences.filter(o => o.workStreamId === wsId && o.status !== 'done').length;
+}
+
+// --- Sidebar rendering ---
+function updateAreaWorkStreamList() {
+  const container = document.getElementById('areaWorkStreamList');
+  if (!container) return;
+  let html = '';
+  state.areas.forEach(area => {
+    const wsList = getWorkStreamsByArea(area.id);
+    const isExpanded = !state.prefs.collapsedAreas[area.id];
+    const totalActive = wsList.reduce((sum, ws) => sum + getActiveOccCount(ws.id), 0);
+    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')">
+      <span class="area-dot" style="background:${area.color}"></span>
+      ${esc(area.name)}
+      ${totalActive > 0 ? `<span class="ws-count">${totalActive}</span>` : ''}
+      <span class="area-toggle">&#9654;</span>
+    </div>`;
+    if (isExpanded) {
+      html += `<div class="sidebar-ws-list">`;
+      wsList.forEach(ws => {
+        const count = getActiveOccCount(ws.id);
+        const isActive = currentWsView === ws.id;
+        html += `<div class="sidebar-ws-item ${isActive ? 'active' : ''}" onclick="showWorkStreamDetail('${ws.id}')">
+          ${esc(ws.name)}
+          ${count > 0 ? `<span class="ws-count">${count}</span>` : ''}
+        </div>`;
+      });
+      if (wsList.length === 0) {
+        html += `<div class="sidebar-add-ws" onclick="openWorkStreamModal(null,'${area.id}')">+ Add work stream</div>`;
+      }
+      html += `</div>`;
+    }
+  });
+  container.innerHTML = html;
+}
+
+function toggleAreaCollapse(areaId) {
+  if (!state.prefs.collapsedAreas) state.prefs.collapsedAreas = {};
+  state.prefs.collapsedAreas[areaId] = !state.prefs.collapsedAreas[areaId];
+  saveState();
+  updateAreaWorkStreamList();
+}
+
+// --- Work Stream Modal ---
+function onWsCadenceChange() {
+  const type = document.getElementById('wsCadenceType').value;
+  const timesGrp = document.getElementById('wsCadenceTimesGroup');
+  const daysGrp = document.getElementById('wsCadenceDaysGroup');
+  timesGrp.style.display = (type === 'xPerWeek' || type === 'xPerMonth') ? '' : 'none';
+  daysGrp.style.display = (type === 'weekly' || type === 'xPerWeek') ? '' : 'none';
+}
+
+function openWorkStreamModal(wsId, defaultAreaId) {
+  editingWsId = wsId || null;
+  const modal = document.getElementById('workStreamModal');
+  const title = document.getElementById('wsModalTitle');
+  const delBtn = document.getElementById('deleteWsBtn');
+
+  const areaSelect = document.getElementById('wsAreaInput');
+  areaSelect.innerHTML = state.areas.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+
+  if (editingWsId) {
+    const ws = state.workStreams.find(w => w.id === editingWsId);
+    if (!ws) return;
+    title.textContent = 'Edit Work Stream';
+    delBtn.style.display = '';
+    document.getElementById('wsNameInput').value = ws.name;
+    document.getElementById('wsDescInput').value = ws.description || '';
+    areaSelect.value = ws.areaId || '';
+    document.getElementById('wsOwnerInput').value = ws.owner || 'shared';
+    document.getElementById('wsCadenceType').value = ws.cadence?.type || 'one-time';
+    if (ws.cadence?.times) document.getElementById('wsCadenceTimes').value = ws.cadence.times;
+    if (ws.cadence?.days) {
+      document.querySelectorAll('#wsCadenceDays input').forEach(cb => {
+        cb.checked = ws.cadence.days.includes(cb.value);
+      });
+    }
+    document.getElementById('wsChecklistInput').value = (ws.checklistTemplate || []).join('\n');
+    document.getElementById('wsStatusInput').value = ws.status || 'active';
+  } else {
+    title.textContent = 'Add Work Stream';
+    delBtn.style.display = 'none';
+    document.getElementById('wsNameInput').value = '';
+    document.getElementById('wsDescInput').value = '';
+    if (defaultAreaId) areaSelect.value = defaultAreaId;
+    document.getElementById('wsOwnerInput').value = 'shared';
+    document.getElementById('wsCadenceType').value = 'weekly';
+    document.getElementById('wsCadenceTimes').value = '2';
+    document.querySelectorAll('#wsCadenceDays input').forEach(cb => cb.checked = false);
+    document.getElementById('wsChecklistInput').value = '';
+    document.getElementById('wsStatusInput').value = 'active';
+  }
+  onWsCadenceChange();
+  modal.classList.add('open');
+  setTimeout(() => document.getElementById('wsNameInput').focus(), 100);
+}
+
+function closeWorkStreamModal() {
+  document.getElementById('workStreamModal').classList.remove('open');
+  editingWsId = null;
+}
+
+function saveWorkStream() {
+  const name = document.getElementById('wsNameInput').value.trim();
+  if (!name) { alert('Name is required.'); return; }
+  const cadenceType = document.getElementById('wsCadenceType').value;
+  const cadence = { type: cadenceType };
+  if (cadenceType === 'xPerWeek' || cadenceType === 'xPerMonth') {
+    cadence.times = parseInt(document.getElementById('wsCadenceTimes').value) || 2;
+  }
+  if (cadenceType === 'weekly' || cadenceType === 'xPerWeek') {
+    cadence.days = [...document.querySelectorAll('#wsCadenceDays input:checked')].map(cb => cb.value);
+  }
+  const checklistLines = document.getElementById('wsChecklistInput').value.split('\n').map(s => s.trim()).filter(Boolean);
+
+  const wsData = {
+    name,
+    description: document.getElementById('wsDescInput').value.trim(),
+    areaId: document.getElementById('wsAreaInput').value,
+    owner: document.getElementById('wsOwnerInput').value,
+    cadence,
+    checklistTemplate: checklistLines,
+    status: document.getElementById('wsStatusInput').value,
+    notes: ''
+  };
+
+  if (editingWsId) {
+    const ws = state.workStreams.find(w => w.id === editingWsId);
+    if (ws) {
+      Object.assign(ws, wsData);
+      ws.notes = ws.notes || '';
+      ws.updatedAt = new Date().toISOString();
+    }
+  } else {
+    wsData.id = uuid();
+    wsData.createdAt = new Date().toISOString();
+    wsData.updatedAt = wsData.createdAt;
+    state.workStreams.push(wsData);
+  }
+  saveState();
+  closeWorkStreamModal();
+  updateAreaWorkStreamList();
+  if (currentWsView) showWorkStreamDetail(currentWsView);
+}
+
+function deleteWorkStream() {
+  if (!editingWsId) return;
+  const ws = state.workStreams.find(w => w.id === editingWsId);
+  if (!ws) return;
+  if (!confirm(`Delete "${ws.name}" and all its occurrences?`)) return;
+  state.occurrences = state.occurrences.filter(o => o.workStreamId !== editingWsId);
+  state.workStreams = state.workStreams.filter(w => w.id !== editingWsId);
+  currentWsView = null;
+  saveState();
+  closeWorkStreamModal();
+  render();
+}
+
+// --- Work Stream Detail View ---
+function showWorkStreamDetail(wsId) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return;
+  currentWsView = wsId;
+  state.prefs.currentView = 'workstream:' + wsId;
+
+  const area = getAreaById(ws.areaId);
+  const occs = getOccurrencesForWs(wsId);
+  const today = todayStr();
+
+  const container = document.getElementById('taskListContainer');
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('dashStats').style.display = 'none';
+
+  let checklistHtml = '';
+  if (ws.checklistTemplate && ws.checklistTemplate.length > 0) {
+    checklistHtml = ws.checklistTemplate.map((step, i) =>
+      `<div class="ws-checklist-item">
+        <span style="color:var(--text-muted);font-size:12px;width:20px;">${i+1}.</span>
+        <input type="text" value="${esc(step)}" onchange="updateWsChecklistItem('${wsId}',${i},this.value)">
+        <button onclick="removeWsChecklistItem('${wsId}',${i})" title="Remove">&times;</button>
+      </div>`
+    ).join('');
+  }
+
+  let occsHtml = '';
+  const pendingOccs = occs.filter(o => o.status !== 'done');
+  const doneOccs = occs.filter(o => o.status === 'done');
+
+  if (pendingOccs.length === 0 && doneOccs.length === 0) {
+    occsHtml = `<p style="color:var(--text-muted);font-size:13px;">No occurrences yet. Click "Generate Next" to create upcoming instances.</p>`;
+  } else {
+    if (pendingOccs.length > 0) {
+      occsHtml += pendingOccs.map(o => renderOccCard(o, today)).join('');
+    }
+    if (doneOccs.length > 0) {
+      occsHtml += `<div style="margin-top:12px;font-size:12px;color:var(--text-muted);font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Completed</div>`;
+      occsHtml += doneOccs.slice(0, 5).map(o => renderOccCard(o, today)).join('');
+      if (doneOccs.length > 5) occsHtml += `<p style="font-size:12px;color:var(--text-muted);">+ ${doneOccs.length - 5} more completed</p>`;
+    }
+  }
+
+  container.innerHTML = `<div class="ws-detail">
+    <div class="ws-detail-header">
+      <div style="flex:1;">
+        <h2>${esc(ws.name)}</h2>
+        ${ws.description ? `<p style="color:var(--text-muted);font-size:14px;margin-top:4px;">${esc(ws.description)}</p>` : ''}
+      </div>
+      <div class="ws-actions">
+        <button onclick="openWorkStreamModal('${wsId}')">Edit</button>
+        <button class="primary" onclick="generateOccurrences('${wsId}')">Generate Next</button>
+      </div>
+    </div>
+    <div class="ws-detail-badges">
+      ${area ? `<span class="ws-badge ws-badge-area"><span class="area-dot" style="background:${area.color}"></span>${esc(area.name)}</span>` : ''}
+      <span class="ws-badge ws-badge-cadence">${getCadenceLabel(ws)}</span>
+      <span class="ws-badge ws-badge-owner">${esc(ws.owner === 'shared' ? 'Shared' : ws.owner === 'me' ? 'Me' : 'Teammate')}</span>
+      <span class="ws-badge ws-badge-status">${esc(ws.status)}</span>
+    </div>
+
+    <div class="ws-section">
+      <div class="ws-section-title">Notes</div>
+      <textarea class="ws-notes-editor" placeholder="Add notes, processes, links..." oninput="saveWsNotes('${wsId}',this.value)">${esc(ws.notes || '')}</textarea>
+    </div>
+
+    <div class="ws-section">
+      <div class="ws-section-title">
+        Checklist Template
+        <button onclick="addWsChecklistItem('${wsId}')">+ Add Step</button>
+      </div>
+      <div id="wsChecklistContainer">${checklistHtml || '<p style="color:var(--text-muted);font-size:13px;">No checklist steps. Add steps that repeat each cycle.</p>'}</div>
+    </div>
+
+    <div class="ws-section">
+      <div class="ws-section-title">
+        Occurrences
+        <button onclick="generateOccurrences('${wsId}')">+ Generate</button>
+      </div>
+      <div class="occ-list">${occsHtml}</div>
+    </div>
+  </div>`;
+
+  updateAreaWorkStreamList();
+}
+
+function renderOccCard(o, today) {
+  const statusClass = o.status === 'done' ? 'done' : o.status === 'in-progress' ? 'in-progress' : '';
+  const statusIcon = o.status === 'done' ? '&#10003;' : o.status === 'in-progress' ? '&#9654;' : '';
+  const isOverdueOcc = o.dueDate && o.dueDate < today && o.status !== 'done';
+  const isTodayOcc = o.dueDate === today;
+  const dueCls = isOverdueOcc ? 'overdue' : isTodayOcc ? 'today' : '';
+  const checkDone = o.checklist ? o.checklist.filter(c => c.done).length : 0;
+  const checkTotal = o.checklist ? o.checklist.length : 0;
+
+  return `<div class="occ-card" onclick="openOccurrenceModal('${o.id}')">
+    <div class="occ-status ${statusClass}" onclick="event.stopPropagation();cycleOccStatus('${o.id}')">${statusIcon}</div>
+    <div class="occ-info">
+      <div class="occ-title">${esc(o.title)}</div>
+      <div class="occ-meta">
+        ${checkTotal > 0 ? `<span class="occ-progress">&#9745; ${checkDone}/${checkTotal}</span>` : ''}
+        ${o.assignee ? `<span>${esc(o.assignee)}</span>` : ''}
+      </div>
+    </div>
+    ${o.dueDate ? `<span class="occ-due ${dueCls}">${formatDate(o.dueDate)}</span>` : ''}
+  </div>`;
+}
+
+function cycleOccStatus(occId) {
+  const o = state.occurrences.find(x => x.id === occId);
+  if (!o) return;
+  const cycle = ['not-started', 'in-progress', 'done'];
+  o.status = cycle[(cycle.indexOf(o.status) + 1) % cycle.length];
+  if (o.status === 'done') o.completedAt = new Date().toISOString();
+  else o.completedAt = null;
+  saveState();
+  if (currentWsView) showWorkStreamDetail(currentWsView);
+}
+
+// --- Notes & Checklist editing ---
+let wsNotesTimer = null;
+function saveWsNotes(wsId, value) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return;
+  ws.notes = value;
+  if (wsNotesTimer) clearTimeout(wsNotesTimer);
+  wsNotesTimer = setTimeout(() => saveState(), 1000);
+}
+
+function updateWsChecklistItem(wsId, idx, value) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws || !ws.checklistTemplate) return;
+  ws.checklistTemplate[idx] = value.trim();
+  saveState();
+}
+
+function removeWsChecklistItem(wsId, idx) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws || !ws.checklistTemplate) return;
+  ws.checklistTemplate.splice(idx, 1);
+  saveState();
+  showWorkStreamDetail(wsId);
+}
+
+function addWsChecklistItem(wsId) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return;
+  if (!ws.checklistTemplate) ws.checklistTemplate = [];
+  ws.checklistTemplate.push('New step');
+  saveState();
+  showWorkStreamDetail(wsId);
+}
+
+// --- Occurrence Generation ---
+function generateOccurrences(wsId) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return;
+  const c = ws.cadence || { type: 'one-time' };
+  const today = new Date();
+  let datesToCreate = [];
+
+  if (c.type === 'one-time') {
+    if (getOccurrencesForWs(wsId).length === 0) {
+      datesToCreate.push(localDateStr(today));
+    } else {
+      alert('This one-time work stream already has an occurrence.');
+      return;
+    }
+  } else if (c.type === 'daily') {
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today); d.setDate(d.getDate() + i);
+      datesToCreate.push(localDateStr(d));
+    }
+  } else if (c.type === 'weekly') {
+    const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
+    const days = (c.days && c.days.length > 0) ? c.days : ['mon'];
+    for (let w = 0; w < 4; w++) {
+      days.forEach(day => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + (w * 7) + ((dayMap[day] - d.getDay() + 7) % 7));
+        if (d >= today) datesToCreate.push(localDateStr(d));
+      });
+    }
+  } else if (c.type === 'xPerWeek') {
+    const times = c.times || 2;
+    const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
+    const days = (c.days && c.days.length >= times) ? c.days.slice(0, times) : ['mon','wed','fri'].slice(0, times);
+    for (let w = 0; w < 4; w++) {
+      days.forEach(day => {
+        const d = new Date(today);
+        d.setDate(d.getDate() + (w * 7) + ((dayMap[day] - d.getDay() + 7) % 7));
+        if (d >= today) datesToCreate.push(localDateStr(d));
+      });
+    }
+  } else if (c.type === 'monthly') {
+    for (let m = 0; m < 3; m++) {
+      const d = new Date(today.getFullYear(), today.getMonth() + m, 15);
+      datesToCreate.push(localDateStr(d));
+    }
+  } else if (c.type === 'xPerMonth') {
+    const times = c.times || 2;
+    for (let m = 0; m < 3; m++) {
+      for (let t = 0; t < times; t++) {
+        const dayOfMonth = Math.round((t + 1) * 28 / (times + 1));
+        const d = new Date(today.getFullYear(), today.getMonth() + m, dayOfMonth);
+        if (d >= today) datesToCreate.push(localDateStr(d));
+      }
+    }
+  } else if (c.type === 'quarterly') {
+    const currentQ = Math.floor(today.getMonth() / 3);
+    for (let q = 0; q < 2; q++) {
+      const qMonth = (currentQ + q) * 3 + 1;
+      const d = new Date(today.getFullYear(), qMonth, 15);
+      if (d < today) d.setFullYear(d.getFullYear() + 1);
+      datesToCreate.push(localDateStr(d));
+    }
+  }
+
+  const existingDates = new Set(getOccurrencesForWs(wsId).map(o => o.dueDate));
+  datesToCreate = datesToCreate.filter(d => !existingDates.has(d));
+
+  if (datesToCreate.length === 0) {
+    alert('All upcoming occurrences already exist.');
+    return;
+  }
+
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  datesToCreate.forEach(dateStr => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const label = `${ws.name} - ${monthNames[d.getMonth()]} ${d.getDate()}`;
+    state.occurrences.push({
+      id: uuid(),
+      workStreamId: wsId,
+      title: label,
+      dueDate: dateStr,
+      status: 'not-started',
+      priority: 'none',
+      assignee: '',
+      checklist: (ws.checklistTemplate || []).map(s => ({ text: s, done: false })),
+      notes: '',
+      createdAt: new Date().toISOString(),
+      completedAt: null
+    });
+  });
+
+  saveState();
+  showWorkStreamDetail(wsId);
+  alert(`Created ${datesToCreate.length} occurrence(s).`);
+}
+
+// --- Occurrence Modal ---
+function openOccurrenceModal(occId) {
+  editingOccId = occId;
+  const o = state.occurrences.find(x => x.id === occId);
+  if (!o) return;
+  const modal = document.getElementById('occurrenceModal');
+  document.getElementById('occModalTitle').textContent = 'Edit Occurrence';
+  document.getElementById('deleteOccBtn').style.display = '';
+  document.getElementById('occTitleInput').value = o.title;
+  document.getElementById('occDueDateInput').value = o.dueDate || '';
+  document.getElementById('occStatusInput').value = o.status || 'not-started';
+  document.getElementById('occPriorityInput').value = o.priority || 'none';
+
+  const assignSel = document.getElementById('occAssigneeInput');
+  assignSel.innerHTML = '<option value="">Unassigned</option>';
+  if (currentUser) assignSel.innerHTML += `<option value="${esc(currentUser.email)}">${esc(currentUser.email.split('@')[0])}</option>`;
+  assignSel.value = o.assignee || '';
+
+  document.getElementById('occNotesInput').value = o.notes || '';
+
+  const clContainer = document.getElementById('occChecklistItems');
+  if (o.checklist && o.checklist.length > 0) {
+    clContainer.innerHTML = o.checklist.map((item, i) =>
+      `<div class="ws-checklist-item">
+        <input type="checkbox" ${item.done ? 'checked' : ''} onchange="toggleOccCheckItem('${occId}',${i},this.checked)">
+        <span style="flex:1;font-size:14px;${item.done ? 'text-decoration:line-through;opacity:0.6;' : ''}">${esc(item.text)}</span>
+      </div>`
+    ).join('');
+    document.getElementById('occChecklistGroup').style.display = '';
+  } else {
+    clContainer.innerHTML = '';
+    document.getElementById('occChecklistGroup').style.display = 'none';
+  }
+
+  modal.classList.add('open');
+}
+
+function closeOccurrenceModal() {
+  document.getElementById('occurrenceModal').classList.remove('open');
+  editingOccId = null;
+}
+
+function saveOccurrence() {
+  if (!editingOccId) return;
+  const o = state.occurrences.find(x => x.id === editingOccId);
+  if (!o) return;
+  o.title = document.getElementById('occTitleInput').value.trim();
+  o.dueDate = document.getElementById('occDueDateInput').value || null;
+  o.status = document.getElementById('occStatusInput').value;
+  o.priority = document.getElementById('occPriorityInput').value;
+  o.assignee = document.getElementById('occAssigneeInput').value;
+  o.notes = document.getElementById('occNotesInput').value;
+  if (o.status === 'done' && !o.completedAt) o.completedAt = new Date().toISOString();
+  if (o.status !== 'done') o.completedAt = null;
+  saveState();
+  closeOccurrenceModal();
+  if (currentWsView) showWorkStreamDetail(currentWsView);
+}
+
+function deleteOccurrence() {
+  if (!editingOccId) return;
+  if (!confirm('Delete this occurrence?')) return;
+  state.occurrences = state.occurrences.filter(o => o.id !== editingOccId);
+  saveState();
+  closeOccurrenceModal();
+  if (currentWsView) showWorkStreamDetail(currentWsView);
+}
+
+function toggleOccCheckItem(occId, idx, checked) {
+  const o = state.occurrences.find(x => x.id === occId);
+  if (!o || !o.checklist) return;
+  o.checklist[idx].done = checked;
+  saveState();
 }
 
 // ===================== MEETING NOTES =====================
@@ -3998,17 +4819,82 @@ function startLocalMode() {
       const parsed = JSON.parse(saved);
       state.tasks = parsed.tasks || [];
       state.inbox = parsed.inbox || [];
+      state.areas = parsed.areas || JSON.parse(JSON.stringify(DEFAULT_AREAS));
+      state.workStreams = parsed.workStreams || [];
+      state.occurrences = parsed.occurrences || [];
       state.customCategories = parsed.customCategories || [];
       state.removedCategories = parsed.removedCategories || [];
       state.settings = { ...state.settings, ...(parsed.settings || {}) };
       state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
     }
   } catch(e) {}
+  if (state.areas.length === 0) state.areas = JSON.parse(JSON.stringify(DEFAULT_AREAS));
   showApp();
   bootApp();
 }
 
+function seedWorkStreams() {
+  if (state.workStreams.length > 0) return;
+  const now = new Date().toISOString();
+  const ws = [
+    { area:'superworker', name:'Channel Posts', cadence:{type:'xPerWeek',times:3,days:['mon','wed','fri']}, checklist:['Draft post','Review','Publish'] },
+    { area:'superworker', name:'Session Prep', cadence:{type:'xPerMonth',times:2}, checklist:['Review agenda','Prepare materials','Send pre-read'] },
+    { area:'superworker', name:'Session Recap', cadence:{type:'xPerMonth',times:2}, checklist:['Compile notes','Format recap','Distribute'] },
+    { area:'superworker', name:'Session Exec Summary', cadence:{type:'xPerMonth',times:2}, checklist:['Summarize key points','Format for exec audience','Send to leadership'] },
+    { area:'superworker', name:'Add New Members to Sessions', cadence:{type:'xPerWeek',times:3,days:['mon','wed','fri']}, checklist:['Check new hires list','Add to SW sessions','Add to Builders sessions'] },
+    { area:'superworker', name:'Build/Publish Resources', cadence:{type:'weekly',days:['fri']}, checklist:['Update SharePoint','Publish new resources','Verify links'] },
+    { area:'superworker', name:'Community Survey', cadence:{type:'quarterly'}, checklist:['Draft survey','Get approvals','Distribute','Analyze results'] },
+    { area:'builders', name:'Channel Posts', cadence:{type:'weekly',days:['tue']}, checklist:['Draft post','Review','Publish'] },
+    { area:'builders', name:'Session Prep', cadence:{type:'monthly'}, checklist:['Review agenda','Prepare materials','Send pre-read'] },
+    { area:'builders', name:'Session Recap', cadence:{type:'monthly'}, checklist:['Compile notes','Format recap','Distribute'] },
+    { area:'builders', name:'Session Exec Summary', cadence:{type:'monthly'}, checklist:['Summarize key points','Format for exec audience','Send'] },
+    { area:'ai-program', name:'Weekly Updates/Dashboard', cadence:{type:'weekly',days:['fri']}, checklist:['Gather metrics','Update dashboard','Send to team'] },
+    { area:'ai-program', name:'Status to Brian', cadence:{type:'weekly',days:['thu']}, checklist:['Compile status','Draft update','Send to Brian'] },
+    { area:'ai-program', name:'Superscout AI Agent', cadence:{type:'weekly'}, checklist:['Update SharePoint resources','Test agent','Document issues'] },
+    { area:'ai-program', name:'AI Communications Plan', cadence:{type:'one-time'}, checklist:['Interview stakeholders','Gather requirements','Draft plan','Review and finalize'] },
+    { area:'data-program', name:'PMR for Data Program', cadence:{type:'monthly'}, checklist:['Schedule prep sessions','Facilitate activities','Compile outcomes'] },
+    { area:'data-program', name:'Data Literacy Videos', cadence:{type:'monthly'}, checklist:['Prepare script','Get script approved','Record narration','Provide script/instructions to Jelani','Confirm and approve video','Prepare Engage comm','Share with Niamh and Brian for approvals','Launch'] },
+    { area:'data-program', name:'Data Gov Working Group', cadence:{type:'xPerMonth',times:2}, checklist:['Prepare agenda','Facilitate meeting','Send recap'] },
+    { area:'data-program', name:'EDA Intake Tracking', cadence:{type:'weekly'}, checklist:['Review new intakes','Update tracking','Follow up on pending'] },
+    { area:'data-program', name:'EDA MSP Work Tracking', cadence:{type:'weekly'}, checklist:['Review status','Update disposition','Report progress'] },
+    { area:'cdo-ops', name:'CDO Connect & Share', cadence:{type:'weekly'}, checklist:['Prepare topics','Facilitate session','Share notes'] },
+    { area:'cdo-ops', name:'Core Team Channel Cleanup', cadence:{type:'monthly'}, checklist:['Review channels','Archive stale content','Update folder structure'] },
+    { area:'cdo-ops', name:'Core Team Channel Restructure', cadence:{type:'one-time'}, checklist:['Audit current structure','Design new structure','Migrate content','Communicate changes'] },
+    { area:'cdo-ops', name:'CDO All Hands', cadence:{type:'quarterly'}, checklist:['Schedule meeting','Coordinate speakers','Prepare agenda','Send invites'] },
+    { area:'cdo-ops', name:'CDO Internal Team Agent', cadence:{type:'one-time'}, checklist:['Define requirements','Build SP/Teams integration','Test','Deploy'] },
+    { area:'cdo-ops', name:'Review CDO Pages on Connection', cadence:{type:'monthly'}, checklist:['Audit pages','Update content','Verify links'] },
+    { area:'cdo-ops', name:'Review CDO Core Team Pages', cadence:{type:'monthly'}, checklist:['Audit pages','Update content','Verify links'] },
+    { area:'cdo-ops', name:'Update DLs/Teams/Groups/Permissions', cadence:{type:'monthly'}, checklist:['Review DLs','Update Teams groups','Check ADO/Jira permissions','Update shared mailboxes','Update recurring meetings'] },
+    { area:'cdo-ops', name:'CDO Leadership Offsite', cadence:{type:'one-time'}, checklist:['Make reservations','Follow up with team','Discuss agenda with Brian','Confirm logistics'] },
+    { area:'devops-tools', name:'Azure DevOps Quality Control', cadence:{type:'weekly'}, checklist:['Review work items','Check data quality','Report issues'] },
+    { area:'devops-tools', name:'Azure DevOps Team Updates', cadence:{type:'weekly'}, checklist:['Update Features','Update Wiki','Review board'] },
+    { area:'devops-tools', name:'Carma Migration', cadence:{type:'one-time'}, checklist:['Talk to Sean about PM help needed','Assess scope','Plan migration'] },
+    { area:'devops-tools', name:'ATLAS Daily JSON Backup', cadence:{type:'daily'}, checklist:['Run backup','Verify file','Store backup'] },
+    { area:'people', name:'Onboarding Check', cadence:{type:'xPerMonth',times:2}, checklist:['Check if anyone new hired','Review onboarding status','Follow up'] },
+    { area:'people', name:'Develop Onboarding Checklist', cadence:{type:'one-time'}, checklist:['Draft checklist','Review with team','Finalize and publish'] },
+    { area:'people', name:'Praxo Training Videos', cadence:{type:'weekly'}, checklist:['Meet with Ken','Review progress','Update assets'] },
+    { area:'vmo', name:'VMO Offsite', cadence:{type:'one-time'}, checklist:['Prepare agenda','Prepare pre-work','Handle logistics','Facilitate'] },
+  ];
+  ws.forEach(w => {
+    state.workStreams.push({
+      id: uuid(),
+      name: w.name,
+      description: '',
+      areaId: w.area,
+      owner: 'shared',
+      cadence: w.cadence,
+      checklistTemplate: w.checklist,
+      status: 'active',
+      notes: '',
+      createdAt: now,
+      updatedAt: now
+    });
+  });
+  saveState();
+}
+
 function bootApp() {
+  seedWorkStreams();
   applyDarkMode();
   updateNotifBtn();
   initStickyNote();
