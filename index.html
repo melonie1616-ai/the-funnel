@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <style>
 :root {
   --bg: #f0f2f7;
@@ -72,6 +75,74 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
 }
+/* ===================== LOGIN SCREEN ===================== */
+.login-screen {
+  display:flex; align-items:center; justify-content:center;
+  min-height:100vh; background:var(--bg);
+  padding:20px;
+}
+.login-card {
+  background:var(--bg-card); border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg); padding:48px 40px; width:100%; max-width:400px;
+  text-align:center;
+}
+.login-logo {
+  font-size:48px; margin-bottom:8px;
+}
+.login-card h1 {
+  font-size:26px; font-weight:800; color:var(--text); margin-bottom:4px;
+  background:var(--accent-gradient); -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+}
+.login-card .login-subtitle {
+  font-size:13px; color:var(--text-muted); margin-bottom:32px;
+}
+.login-field {
+  text-align:left; margin-bottom:16px;
+}
+.login-field label {
+  display:block; font-size:12px; font-weight:600; text-transform:uppercase;
+  letter-spacing:0.5px; color:var(--text-muted); margin-bottom:6px;
+}
+.login-field input {
+  width:100%; padding:12px 14px; font-size:14px; border:1px solid var(--border);
+  border-radius:var(--radius-sm); background:var(--bg); color:var(--text);
+  outline:none; transition:border-color var(--transition);
+}
+.login-field input:focus {
+  border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15);
+}
+.login-btn {
+  width:100%; padding:12px; font-size:15px; font-weight:700; border:none;
+  border-radius:var(--radius-sm); background:var(--accent-gradient);
+  color:#fff; cursor:pointer; margin-top:8px;
+  transition:transform var(--transition), box-shadow var(--transition);
+}
+.login-btn:hover { transform:translateY(-1px); box-shadow:var(--shadow-md); }
+.login-btn:active { transform:translateY(0); }
+.login-btn:disabled { opacity:0.6; cursor:not-allowed; transform:none; }
+.login-error {
+  color:var(--danger); font-size:12px; margin-top:12px; min-height:18px;
+}
+.login-loading {
+  color:var(--text-muted); font-size:13px; margin-top:12px;
+}
+.app-hidden { display:none !important; }
+
+/* User indicator in topbar */
+.topbar-user {
+  display:flex; align-items:center; gap:6px;
+  font-size:12px; color:rgba(255,255,255,0.7); font-weight:500;
+  margin-left:auto; padding:0 8px;
+}
+.topbar-user button {
+  background:none; border:1px solid rgba(255,255,255,0.2); color:rgba(255,255,255,0.7);
+  padding:4px 10px; border-radius:var(--radius-sm); font-size:11px; cursor:pointer;
+  transition:all var(--transition);
+}
+.topbar-user button:hover {
+  background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.4);
+}
+
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -1013,6 +1084,28 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 </head>
 <body>
 
+<!-- LOGIN SCREEN -->
+<div class="login-screen" id="loginScreen">
+  <div class="login-card">
+    <div class="login-logo">&#x1F3AF;</div>
+    <h1>The Funnel</h1>
+    <p class="login-subtitle">Operational Hub</p>
+    <div class="login-field">
+      <label>Email</label>
+      <input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <div class="login-field">
+      <label>Password</label>
+      <input type="password" id="loginPassword" placeholder="Enter your password" onkeydown="if(event.key==='Enter')doLogin()">
+    </div>
+    <button class="login-btn" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="login-error" id="loginError"></div>
+  </div>
+</div>
+
+<!-- APP CONTAINER (hidden until authenticated) -->
+<div id="appContainer" class="app-hidden">
+
 <!-- TOP BAR -->
 <div class="topbar">
   <button class="topbar-btn" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
@@ -1048,6 +1141,10 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <button class="topbar-icon-btn btn-settings" id="notifBtn" onclick="toggleNotifications()" data-tooltip="Notifications: Off">&#128276;</button>
   <button class="topbar-icon-btn btn-settings" id="darkModeBtn" onclick="toggleDarkMode()" data-tooltip="Toggle Dark Mode">&#127763;</button>
   <button class="topbar-icon-btn btn-settings" onclick="openSettings()" data-tooltip="Settings">&#9881;</button>
+  <div class="topbar-user">
+    <span id="currentUserLabel"></span>
+    <button onclick="doLogout()">Sign Out</button>
+  </div>
 </div>
 
 <!-- SIDEBAR BACKDROP (mobile) -->
@@ -1504,11 +1601,87 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 </div>
 
+</div><!-- /appContainer -->
+
 <script>
+// ===================== FIREBASE CONFIG =====================
+// PASTE YOUR FIREBASE CONFIG HERE (from Firebase Console → Project Settings → Your apps)
+const firebaseConfig = {
+  apiKey: "",
+  authDomain: "",
+  projectId: "",
+  storageBucket: "",
+  messagingSenderId: "",
+  appId: ""
+};
+
+let firebaseApp, firebaseAuth, firebaseDb;
+let currentUser = null;
+let saveDebounceTimer = null;
+const SAVE_DEBOUNCE_MS = 1500;
+
+function initFirebase() {
+  firebaseApp = firebase.initializeApp(firebaseConfig);
+  firebaseAuth = firebase.auth();
+  firebaseDb = firebase.firestore();
+  firebaseDb.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+}
+
+// ===================== AUTH =====================
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const btn = document.getElementById('loginBtn');
+
+  if (!email || !password) { errEl.textContent = 'Please enter email and password.'; return; }
+
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  errEl.textContent = '';
+
+  firebaseAuth.signInWithEmailAndPassword(email, password)
+    .then(() => {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+    })
+    .catch(err => {
+      btn.disabled = false;
+      btn.textContent = 'Sign In';
+      const messages = {
+        'auth/user-not-found': 'No account found with that email.',
+        'auth/wrong-password': 'Incorrect password.',
+        'auth/invalid-email': 'Invalid email address.',
+        'auth/invalid-credential': 'Invalid email or password.',
+        'auth/too-many-requests': 'Too many attempts. Try again later.',
+        'auth/network-request-failed': 'Network error. Check your connection.'
+      };
+      errEl.textContent = messages[err.code] || err.message;
+    });
+}
+
+function doLogout() {
+  if (!confirm('Sign out?')) return;
+  firebaseAuth.signOut();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('appContainer').classList.remove('app-hidden');
+}
+
+function showLogin() {
+  document.getElementById('loginScreen').style.display = '';
+  document.getElementById('appContainer').classList.add('app-hidden');
+  document.getElementById('loginEmail').value = '';
+  document.getElementById('loginPassword').value = '';
+  document.getElementById('loginError').textContent = '';
+}
+
 // ===================== STATE =====================
 const INITIAL_CATEGORIES = ['VMO','CDO Core','SW','Data team','Communications','MDM','Onboarding','ADR/CTO','My Stuff'];
 
-let state = {
+const DEFAULT_STATE = {
   tasks: [],
   inbox: [],
   customCategories: [],
@@ -1530,29 +1703,103 @@ let state = {
   }
 };
 
+let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+
 let editingTaskId = null;
 
-// ===================== PERSISTENCE =====================
-function loadState() {
+// ===================== FIRESTORE PERSISTENCE =====================
+function getDocRef() {
+  return firebaseDb.collection('appData').doc('shared');
+}
+
+async function loadState() {
   try {
-    const saved = localStorage.getItem('thefunnel_state');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      state.tasks = parsed.tasks || [];
-      state.inbox = parsed.inbox || [];
-      state.customCategories = parsed.customCategories || [];
-      state.removedCategories = parsed.removedCategories || [];
-      state.settings = { ...state.settings, ...(parsed.settings || {}) };
-      state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
+    const doc = await getDocRef().get();
+    if (doc.exists) {
+      const data = doc.data();
+      state.tasks = data.tasks || [];
+      state.inbox = data.inbox || [];
+      state.customCategories = data.customCategories || [];
+      state.removedCategories = data.removedCategories || [];
+      state.settings = { ...state.settings, ...(data.settings || {}) };
+      state.prefs = { ...state.prefs, ...(data.prefs || {}) };
     }
-  } catch(e) { console.error('Failed to load state', e); }
+  } catch(e) { console.error('Failed to load state from Firestore', e); }
 }
 
 function saveState() {
+  if (saveDebounceTimer) clearTimeout(saveDebounceTimer);
+  saveDebounceTimer = setTimeout(() => {
+    _saveToFirestore();
+  }, SAVE_DEBOUNCE_MS);
+  // Also keep localStorage as a local cache for offline speed
   try {
     localStorage.setItem('thefunnel_state', JSON.stringify(state));
-  } catch(e) { console.error('Failed to save state', e); }
-  if (typeof triggerAutoSync === 'function') triggerAutoSync();
+  } catch(e) {}
+}
+
+async function _saveToFirestore() {
+  if (!currentUser || !firebaseDb) return;
+  try {
+    await getDocRef().set({
+      tasks: state.tasks,
+      inbox: state.inbox,
+      customCategories: state.customCategories,
+      removedCategories: state.removedCategories,
+      settings: state.settings,
+      prefs: state.prefs,
+      lastUpdatedBy: currentUser.email,
+      lastUpdatedAt: firebase.firestore.FieldValue.serverTimestamp()
+    });
+  } catch(e) { console.error('Failed to save to Firestore', e); }
+}
+
+function listenForChanges() {
+  getDocRef().onSnapshot(doc => {
+    if (!doc.exists || !doc.metadata.hasPendingWrites) {
+      if (doc.exists && !doc.metadata.hasPendingWrites) {
+        const data = doc.data();
+        const remoteUpdater = data.lastUpdatedBy;
+        if (remoteUpdater && remoteUpdater !== currentUser.email) {
+          state.tasks = data.tasks || [];
+          state.inbox = data.inbox || [];
+          state.customCategories = data.customCategories || [];
+          state.removedCategories = data.removedCategories || [];
+          state.settings = { ...state.settings, ...(data.settings || {}) };
+          render();
+        }
+      }
+    }
+  });
+}
+
+// ===================== MIGRATION (localStorage → Firestore) =====================
+async function checkAndMigrate() {
+  const doc = await getDocRef().get();
+  if (doc.exists) return;
+
+  const saved = localStorage.getItem('thefunnel_state');
+  if (!saved) return;
+
+  try {
+    const parsed = JSON.parse(saved);
+    if (parsed.tasks && parsed.tasks.length > 0) {
+      const doMigrate = confirm(
+        `Found ${parsed.tasks.length} task(s) in local storage. ` +
+        'Import them into the shared cloud database?\n\n' +
+        '(This is a one-time migration. Click OK to import, Cancel to start fresh.)'
+      );
+      if (doMigrate) {
+        state.tasks = parsed.tasks || [];
+        state.inbox = parsed.inbox || [];
+        state.customCategories = parsed.customCategories || [];
+        state.removedCategories = parsed.removedCategories || [];
+        state.settings = { ...state.settings, ...(parsed.settings || {}) };
+        state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
+        await _saveToFirestore();
+      }
+    }
+  } catch(e) { console.error('Migration failed', e); }
 }
 
 function uuid() {
@@ -3733,26 +3980,64 @@ function applyDarkMode() {
 }
 
 // ===================== INIT =====================
-loadState();
-applyDarkMode();
-updateNotifBtn();
-initStickyNote();
-if (state.prefs.notificationsEnabled && Notification.permission === 'granted') startNotifCheck();
-
-// Apply saved sidebar state (desktop only; mobile starts hidden via CSS)
-if (!isMobile() && !state.prefs.sidebarOpen) {
-  document.getElementById('sidebar').classList.add('collapsed');
+// Check if Firebase is configured
+if (!firebaseConfig.apiKey) {
+  document.getElementById('loginError').textContent = 'Firebase not configured. See FIREBASE-SETUP.md';
+  document.getElementById('loginBtn').disabled = true;
+  // Fall back to local-only mode for development/testing
+  document.getElementById('loginError').innerHTML =
+    'Firebase not configured yet. <button onclick="startLocalMode()" style="background:var(--accent);color:#fff;border:none;padding:6px 12px;border-radius:6px;cursor:pointer;margin-left:8px;">Use Local Mode</button>';
 }
 
-render();
-
-// Auto-pull from cloud on load if sync is configured
-if (state.settings.syncToken && state.settings.syncGistId) {
-  syncPull().catch(() => {});
+function startLocalMode() {
+  currentUser = { email: 'local@user', displayName: 'Local User' };
+  try {
+    const saved = localStorage.getItem('thefunnel_state');
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      state.tasks = parsed.tasks || [];
+      state.inbox = parsed.inbox || [];
+      state.customCategories = parsed.customCategories || [];
+      state.removedCategories = parsed.removedCategories || [];
+      state.settings = { ...state.settings, ...(parsed.settings || {}) };
+      state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
+    }
+  } catch(e) {}
+  showApp();
+  bootApp();
 }
 
-// Auto-show morning brief once per day
-checkAutoMorningBrief();
+function bootApp() {
+  applyDarkMode();
+  updateNotifBtn();
+  initStickyNote();
+  if (state.prefs.notificationsEnabled && Notification.permission === 'granted') startNotifCheck();
+  if (!isMobile() && !state.prefs.sidebarOpen) {
+    document.getElementById('sidebar').classList.add('collapsed');
+  }
+  document.getElementById('currentUserLabel').textContent = currentUser.email.split('@')[0];
+  render();
+  checkAutoMorningBrief();
+}
+
+// Initialize Firebase and listen for auth state
+if (firebaseConfig.apiKey) {
+  initFirebase();
+  firebaseAuth.onAuthStateChanged(async user => {
+    if (user) {
+      currentUser = user;
+      await checkAndMigrate();
+      await loadState();
+      showApp();
+      bootApp();
+      listenForChanges();
+    } else {
+      currentUser = null;
+      state = JSON.parse(JSON.stringify(DEFAULT_STATE));
+      showLogin();
+    }
+  });
+}
 </script>
 </body>
 </html>
