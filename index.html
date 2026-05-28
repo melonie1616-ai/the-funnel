@@ -1855,7 +1855,8 @@ function getFilteredTasks() {
     tasks = tasks.filter(t => !t.completed);
     tasks = tasks.filter(t =>
       t.title.toLowerCase().includes(searchTerm) ||
-      (t.notes || '').toLowerCase().includes(searchTerm)
+      (t.notes || '').toLowerCase().includes(searchTerm) ||
+      (t.category || '').toLowerCase().includes(searchTerm)
     );
     // Still apply filter chips on top of search
     state.prefs.filters.forEach(f => {
@@ -1995,9 +1996,11 @@ function render() {
   if (searchTerm) {
     viewOccs = state.occurrences.filter(o => o.status !== 'done' && isMyOccurrence(o)).filter(o => {
       const ws = state.workStreams.find(w => w.id === o.workStreamId);
+      const area = ws ? state.areas.find(a => a.id === ws.areaId) : null;
       return (o.title || '').toLowerCase().includes(searchTerm) ||
         (o.notes || '').toLowerCase().includes(searchTerm) ||
-        (ws?.name || '').toLowerCase().includes(searchTerm);
+        (ws?.name || '').toLowerCase().includes(searchTerm) ||
+        (area?.name || '').toLowerCase().includes(searchTerm);
     });
   } else {
     const pending = state.occurrences.filter(o => o.status !== 'done' && o.status !== 'waiting' && isMyOccurrence(o));
