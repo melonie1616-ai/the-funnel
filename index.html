@@ -1970,64 +1970,81 @@ function render() {
     </div>`;
   }
 
-  // Render occurrences section
-  if (viewOccs.length > 0) {
-    const { sortBy, sortDir } = state.prefs;
-    const dir = sortDir === 'asc' ? 1 : -1;
-    viewOccs.sort((a, b) => {
-      let cmp = 0;
-      if (sortBy === 'dueDate') {
-        cmp = (a.dueDate || '9999-99-99').localeCompare(b.dueDate || '9999-99-99');
-      } else if (sortBy === 'priority') {
-        cmp = (PRIORITY_ORDER[a.priority] || 3) - (PRIORITY_ORDER[b.priority] || 3);
-      } else if (sortBy === 'createdAt') {
-        cmp = (a.createdAt || '').localeCompare(b.createdAt || '');
-      } else if (sortBy === 'title') {
-        cmp = (a.title || '').localeCompare(b.title || '');
-      }
-      return cmp * dir;
-    });
-    html += `<div class="group-header" onclick="toggleGroup('_occurrences')">
-      <span class="arrow ${state.prefs.collapsedGroups['_occurrences'] ? 'collapsed' : ''}">&#9660;</span>
-      Work Stream Items
-      <span class="group-count">(${viewOccs.length})</span>
-    </div>`;
-    const isCompactOcc = state.prefs.viewMode === 'compact';
-    html += `<div class="group-tasks ${state.prefs.collapsedGroups['_occurrences'] ? 'collapsed' : ''} ${isCompactOcc ? 'compact' : ''}">`;
-    viewOccs.forEach(o => { html += renderOccCard(o, today); });
-    html += '</div>';
+  // Merge occurrences and tasks into a unified list for grouping and sorting
+  const { sortBy, sortDir, groupBy } = state.prefs;
+  const dir = sortDir === 'asc' ? 1 : -1;
+  const isCompact = state.prefs.viewMode === 'compact';
+
+  // Normalize both types into a common sortable shape
+  const allItems = [];
+  viewOccs.forEach(o => {
+    allItems.push({ kind:'occ', data:o, title:o.title||'', dueDate:o.dueDate||'', priority:o.priority||'none', createdAt:o.createdAt||'' });
+  });
+  tasks.forEach(t => {
+    allItems.push({ kind:'task', data:t, title:t.title||'', dueDate:t.dueDate||'', priority:t.priority||'none', createdAt:t.createdAt||'' });
+  });
+
+  // Sort
+  allItems.sort((a, b) => {
+    let cmp = 0;
+    if (sortBy === 'dueDate') {
+      cmp = (a.dueDate || '9999-99-99').localeCompare(b.dueDate || '9999-99-99');
+    } else if (sortBy === 'priority') {
+      cmp = (PRIORITY_ORDER[a.priority]||3) - (PRIORITY_ORDER[b.priority]||3);
+    } else if (sortBy === 'createdAt') {
+      cmp = a.createdAt.localeCompare(b.createdAt);
+    } else if (sortBy === 'title') {
+      cmp = a.title.localeCompare(b.title);
+    }
+    return cmp * dir;
+  });
+
+  // Group
+  function getGroupKey(item) {
+    if (groupBy === 'date') {
+      if (!item.dueDate) return 'No Date';
+      if (isOverdue(item.dueDate)) return 'Overdue';
+      if (isToday(item.dueDate)) return 'Today';
+      if (isWithinWeek(item.dueDate)) return 'This Week';
+      return 'Later';
+    } else if (groupBy === 'priority') {
+      return PRIORITY_LABELS[item.priority || 'none'];
+    }
+    return 'All';
   }
 
-  // Render legacy tasks section
-  if (tasks.length > 0) {
-    const groups = groupTasks(tasks);
-    if (viewOccs.length > 0 && tasks.length > 0) {
-      html += `<div class="group-header" onclick="toggleGroup('_legacytasks')">
-        <span class="arrow ${state.prefs.collapsedGroups['_legacytasks'] ? 'collapsed' : ''}">&#9660;</span>
-        Legacy Tasks
-        <span class="group-count">(${tasks.length})</span>
+  if (groupBy === 'none') {
+    html += `<div class="group-tasks ${isCompact ? 'compact' : ''}">`;
+    allItems.forEach(item => {
+      html += item.kind === 'occ' ? renderOccCard(item.data, today) : renderTaskCard(item.data);
+    });
+    html += '</div>';
+  } else {
+    const grouped = {};
+    allItems.forEach(item => {
+      const key = getGroupKey(item);
+      if (!grouped[key]) grouped[key] = [];
+      grouped[key].push(item);
+    });
+    let order;
+    if (groupBy === 'date') order = ['Overdue','Today','This Week','Later','No Date'];
+    else if (groupBy === 'priority') order = ['1-High','2-Medium','3-Low','4-None'];
+    else order = Object.keys(grouped).sort();
+
+    order.filter(k => grouped[k]).forEach(k => {
+      const items = grouped[k];
+      const isCollapsed = state.prefs.collapsedGroups[k];
+      html += `<div class="group-header" onclick="toggleGroup('${esc(k)}')">
+        <span class="arrow ${isCollapsed ? 'collapsed' : ''}">&#9660;</span>
+        ${esc(k)}
+        <span class="group-count">(${items.length})</span>
       </div>`;
-      html += `<div class="group-tasks ${state.prefs.collapsedGroups['_legacytasks'] ? 'collapsed' : ''}">`;
-    }
-    const isCompact = state.prefs.viewMode === 'compact';
-    groups.forEach(g => {
-      const isCollapsed = state.prefs.collapsedGroups[g.name];
-      if (state.prefs.groupBy !== 'none' && viewOccs.length === 0) {
-        html += `<div class="group-header" onclick="toggleGroup('${esc(g.name)}')">
-          <span class="arrow ${isCollapsed ? 'collapsed' : ''}">&#9660;</span>
-          ${esc(g.name)}
-          <span class="group-count">(${g.tasks.length})</span>
-        </div>`;
-      }
-      html += `<div class="group-tasks ${isCollapsed && viewOccs.length === 0 ? 'collapsed' : ''} ${isCompact ? 'compact' : ''}">`;
-      g.tasks.forEach(t => {
-        html += renderTaskCard(t);
+      html += `<div class="group-tasks ${isCollapsed ? 'collapsed' : ''} ${isCompact ? 'compact' : ''}">`;
+      items.forEach(item => {
+        html += item.kind === 'occ' ? renderOccCard(item.data, today) : renderTaskCard(item.data);
       });
       html += '</div>';
     });
-    if (viewOccs.length > 0 && tasks.length > 0) {
-      html += '</div>';
-    }
   }
 
   container.innerHTML = html;
