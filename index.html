@@ -703,17 +703,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 }
 .toolbar select:focus { border-color:var(--accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.1); }
 .toolbar-sep { width:1px; height:24px; background:var(--border); margin:0 6px; }
-.view-toggle {
-  display:flex; border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;
-}
-.view-toggle button {
-  padding:6px 12px; background:var(--bg); color:var(--text-muted); font-size:12px; font-weight:500;
-  border:none; border-right:1px solid var(--border);
-  transition: all var(--transition);
-}
-.view-toggle button:last-child { border-right:none; }
-.view-toggle button.active { background:var(--accent); color:#fff; }
-.view-toggle button:hover:not(.active) { background:var(--accent-light); color:var(--accent); }
 
 /* FILTER CHIPS */
 .filter-chips {
@@ -1272,11 +1261,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         <select id="areaFilterSelect" onchange="onAreaFilterChange()">
           <option value="">All Areas</option>
         </select>
-      </div>
-      <div class="toolbar-sep"></div>
-      <div class="view-toggle">
-        <button id="viewCard" class="active" onclick="setViewMode('card')">Cards</button>
-        <button id="viewCompact" onclick="setViewMode('compact')">Compact</button>
       </div>
     </div>
 
@@ -2058,7 +2042,6 @@ function render() {
   // Merge occurrences and tasks into a unified list for grouping and sorting
   const { sortBy, sortDir, groupBy } = state.prefs;
   const dir = sortDir === 'asc' ? 1 : -1;
-  const isCompact = state.prefs.viewMode === 'compact';
 
   // Normalize both types into a common sortable shape
   const allItems = [];
@@ -2099,7 +2082,7 @@ function render() {
   }
 
   if (groupBy === 'none') {
-    html += `<div class="group-tasks ${isCompact ? 'compact' : ''}">`;
+    html += `<div class="group-tasks">`;
     allItems.forEach(item => {
       html += item.kind === 'occ' ? renderOccCard(item.data, today) : renderTaskCard(item.data);
     });
@@ -2124,7 +2107,7 @@ function render() {
         ${esc(k)}
         <span class="group-count">(${items.length})</span>
       </div>`;
-      html += `<div class="group-tasks ${isCollapsed ? 'collapsed' : ''} ${isCompact ? 'compact' : ''}">`;
+      html += `<div class="group-tasks ${isCollapsed ? 'collapsed' : ''}">`;
       items.forEach(item => {
         html += item.kind === 'occ' ? renderOccCard(item.data, today) : renderTaskCard(item.data);
       });
@@ -2160,7 +2143,7 @@ function renderTaskCard(t) {
         ${t.recurrence ? `<span class="recurring-icon" title="Recurring: ${t.recurrence.startsWith('every:') ? 'every '+t.recurrence.split(':')[1]+' days' : t.recurrence}">&#128260;</span>` : ''}
         ${t.waitingOn ? `<span class="waiting-badge" title="Waiting on: ${esc(t.waitingOn)}">&#9203; ${esc(t.waitingOn)}</span>` : ''}
       </div>
-      ${t.notes && state.prefs.viewMode === 'card' ? `<div class="task-notes-preview">${esc(t.notes.slice(0,120))}</div>` : ''}
+      ${t.notes ? `<div class="task-notes-preview">${esc(t.notes.slice(0,120))}</div>` : ''}
     </div>
   </div>`;
 }
@@ -2219,8 +2202,6 @@ function updateToolbar() {
   document.getElementById('groupBy').value = state.prefs.groupBy;
   document.getElementById('sortBy').value = state.prefs.sortBy;
   document.getElementById('sortDirBtn').innerHTML = state.prefs.sortDir === 'asc' ? '&#9650;' : '&#9660;';
-  document.getElementById('viewCard').classList.toggle('active', state.prefs.viewMode === 'card');
-  document.getElementById('viewCompact').classList.toggle('active', state.prefs.viewMode === 'compact');
 
   // Populate area filter
   const areaSel = document.getElementById('areaFilterSelect');
@@ -2282,10 +2263,6 @@ function toggleSortDir() {
   saveState(); render();
 }
 
-function setViewMode(mode) {
-  state.prefs.viewMode = mode;
-  saveState(); render();
-}
 
 function addFilter() {
   const sel = document.getElementById('addFilterSelect');
@@ -2488,7 +2465,7 @@ function renderCalDayCell(dateStr, day, isOther, today) {
   html += `<div class="cal-date">${day}</div>`;
   const maxShow = 3;
   events.slice(0, maxShow).forEach(ev => {
-    html += `<div class="cal-event${ev.type==='task'?' task-event':''}" style="${ev.type!=='task'?'background:'+ev.color:''}${ev.status==='done'?';opacity:0.4;text-decoration:line-through':''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')" title="${esc(ev.title)}">${ev.status==='done'?'&#10003; ':''}${esc(ev.title)}</div>`;
+    html += `<div class="cal-event${ev.type==='task'?' task-event':''}" style="${ev.type!=='task'?'background:'+ev.color:''}${ev.status==='done'?';opacity:0.45;text-decoration:line-through;font-style:italic':''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')" title="${esc(ev.title)}">${ev.status==='done'?'&#10003; ':''}${esc(ev.title)}</div>`;
   });
   if (events.length > maxShow) {
     html += `<div class="cal-more">+${events.length - maxShow} more</div>`;
@@ -2532,9 +2509,9 @@ function renderCalWeek(today, filterHtml) {
     html += `<div class="cal-week-header">${dayNames[d.getDay()]}</div>`;
     html += `<div class="cal-week-date">${d.getDate()}</div>`;
     events.forEach(ev => {
-      html += `<div class="cal-week-event" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')">
+      html += `<div class="cal-week-event" style="${ev.status==='done'?'opacity:0.45;text-decoration:line-through;font-style:italic':''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')">
         <span class="cal-ev-dot" style="background:${ev.color}"></span>
-        <span class="cal-ev-title">${esc(ev.title)}</span>
+        <span class="cal-ev-title">${ev.status==='done'?'&#10003; ':''}${esc(ev.title)}</span>
         ${ev.status === 'in-progress' ? '<span class="cal-ev-status">&#9654;</span>' : ''}
       </div>`;
     });
@@ -2653,10 +2630,10 @@ function openCalDayDetail(dateStr) {
     body.innerHTML = events.map(ev => {
       const statusLabel = ev.status === 'done' ? '&#10003; Done' : ev.status === 'in-progress' ? '&#9654; In Progress' : 'To Do';
       const statusColor = ev.status === 'done' ? 'var(--success)' : ev.status === 'in-progress' ? 'var(--accent)' : 'var(--text-muted)';
-      return `<div class="cal-detail-item" onclick="calEventClick('${ev.type}','${ev.id}')">
+      return `<div class="cal-detail-item" style="${ev.status==='done'?'opacity:0.5;':''}}" onclick="calEventClick('${ev.type}','${ev.id}')">
         <span class="cal-detail-dot" style="background:${ev.color}"></span>
         <div class="cal-detail-info">
-          <div class="cal-detail-title">${esc(ev.title)}</div>
+          <div class="cal-detail-title" style="${ev.status==='done'?'text-decoration:line-through;font-style:italic':''}">${esc(ev.title)}</div>
           <div class="cal-detail-meta">${esc(ev.areaName)}${ev.wsName ? ' / ' + esc(ev.wsName) : ''}</div>
         </div>
         <span class="cal-detail-status" style="color:${statusColor}">${statusLabel}</span>
