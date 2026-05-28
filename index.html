@@ -897,22 +897,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 }
 
 /* Focus timer */
-#focusTimerModal .modal { position:relative; overflow:hidden; }
-#focusTimerModal .modal::before {
-  content:''; position:absolute; top:0; left:0; right:0; height:3px;
-  background: linear-gradient(90deg, var(--accent), var(--success));
-  transform-origin: left; transition: transform 0.5s linear;
-}
-.focus-break #focusTimerDisplay { color: var(--success); }
-.focus-work #focusTimerDisplay { color: var(--accent); }
-.focus-task-btn {
-  background:none; border:none; cursor:pointer; font-size:14px;
-  opacity:0; transition:opacity 0.2s; padding:2px 4px; border-radius:4px;
-  position:absolute; top:8px; right:8px;
-}
 .task-card { position:relative; }
-.task-card:hover .focus-task-btn { opacity:0.6; }
-.focus-task-btn:hover { opacity:1 !important; background:var(--accent-light); }
 
 /* Sticky note */
 .sticky-note {
@@ -978,26 +963,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   to { transform:rotate(360deg); }
 }
 
-/* Weekly review */
-#weeklyReviewBody h4 { color:var(--text); font-weight:600; }
-
-/* MEETING NOTES */
-.meeting-notes-textarea {
-  width:100%; min-height:200px; resize:vertical;
-  padding:12px; font-size:13px; font-family:inherit;
-  border:1px solid var(--border); border-radius:var(--radius);
-  background:var(--bg); color:var(--text);
-}
-.extracted-task-row {
-  display:flex; align-items:center; gap:8px;
-  padding:8px 10px; margin-bottom:4px;
-  border:1px solid var(--border); border-radius:var(--radius);
-  background:var(--bg);
-}
-.extracted-task-row input[type="checkbox"] { width:16px; height:16px; accent-color:var(--accent); }
-.extracted-task-row input[type="text"] { flex:1; padding:4px 8px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); color:var(--text); font-size:13px; }
-.extracted-task-row select { padding:4px 6px; font-size:12px; border:1px solid var(--border); border-radius:4px; background:var(--bg-card); color:var(--text); }
-
 /* SETTINGS */
 .settings-group { margin-bottom:16px; padding-bottom:16px; border-bottom:1px solid var(--border); }
 .settings-group:last-child { border-bottom:none; }
@@ -1011,89 +976,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .empty-state h3 { font-size:20px; font-weight:700; margin-bottom:8px; color:var(--text); }
 .empty-state p { font-size:14px; line-height:1.6; max-width:360px; margin:0 auto; }
 
-/* VOICE CAPTURE */
-.voice-recording {
-  border-color: var(--danger) !important;
-  background: var(--danger-light) !important;
-  color: var(--danger) !important;
-  animation: voice-pulse 1s ease-in-out infinite;
-}
-@keyframes voice-pulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(239,68,68,0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); }
-}
-
-/* DAILY PLANNER */
-.day-plan-drop {
-  border:2px dashed var(--border);
-  border-radius:var(--radius);
-  padding:40px 20px;
-  text-align:center;
-  color:var(--text-muted);
-  cursor:pointer;
-  transition: all var(--transition);
-  position:relative;
-}
-.day-plan-drop:hover, .day-plan-drop.dragover {
-  border-color:var(--accent);
-  background:var(--accent-light);
-}
-.day-plan-drop img {
-  max-width:100%;
-  max-height:300px;
-  border-radius:var(--radius);
-  margin-top:10px;
-}
-.day-plan-output {
-  margin-top:16px;
-  padding:16px;
-  background:var(--bg);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  font-size:14px;
-  line-height:1.7;
-  white-space:pre-wrap;
-}
-.day-plan-output h3 {
-  font-size:15px;
-  margin:16px 0 6px;
-  padding-bottom:4px;
-  border-bottom:1px solid var(--border);
-}
-.day-plan-output h3:first-child { margin-top:0; }
-.day-plan-output .time-block {
-  display:flex;
-  gap:12px;
-  padding:8px 0;
-  border-bottom:1px solid var(--border);
-}
-.day-plan-output .time-block:last-child { border-bottom:none; }
-.day-plan-output .time-label {
-  font-weight:700;
-  color:var(--accent);
-  min-width:70px;
-  flex-shrink:0;
-}
-.day-plan-output .time-content { flex:1; }
-.day-plan-output .meeting-tag {
-  display:inline-block;
-  background:var(--accent-light);
-  color:var(--accent);
-  padding:1px 8px;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:600;
-}
-.day-plan-output .task-tag {
-  display:inline-block;
-  background:var(--success-light);
-  color:var(--success);
-  padding:1px 8px;
-  border-radius:10px;
-  font-size:12px;
-  font-weight:600;
-  border:1px solid var(--success);
-}
 
 /* CARD ANIMATION */
 @keyframes cardFadeIn {
@@ -1177,8 +1059,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   .priority-badge, .waiting-badge { font-size:9px; padding:1px 6px; }
   .date-badge { font-size:10px; }
 
-  /* Focus button hidden on mobile (too small) */
-  .focus-task-btn { display:none !important; }
 
   /* Group headers */
   .group-header { font-size:12px; padding:8px 0 4px; }
@@ -1318,35 +1198,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <div class="main">
 
     <!-- DASHBOARD STATS BAR -->
-    <div class="dash-stats" id="dashStats">
-      <div class="dash-greeting">
-        <h2 id="dashGreeting">Good morning</h2>
-        <p id="dashDate" class="dash-date"></p>
-      </div>
-      <div class="dash-cards">
-        <div class="dash-card dash-card-today" onclick="switchView('today')">
-          <div class="dash-card-num" id="dashToday">0</div>
-          <div class="dash-card-label">Due Today</div>
-        </div>
-        <div class="dash-card dash-card-overdue" onclick="switchView('overdue')">
-          <div class="dash-card-num" id="dashOverdue">0</div>
-          <div class="dash-card-label">Overdue</div>
-        </div>
-        <div class="dash-card dash-card-week" onclick="switchView('calendar')">
-          <div class="dash-card-num" id="dashWeek">0</div>
-          <div class="dash-card-label">This Week</div>
-        </div>
-        <div class="dash-card dash-card-waiting" style="background:var(--success-light);border-color:rgba(16,185,129,0.2);">
-          <div class="dash-card-num" id="dashActiveWs">0</div>
-          <div class="dash-card-label">Active Streams</div>
-        </div>
-        <div class="dash-card" style="background:var(--accent-light);border-color:rgba(124,58,237,0.2);" onclick="switchView('waiting')">
-          <div class="dash-card-num" id="dashWaiting" style="color:var(--accent);">0</div>
-          <div class="dash-card-label" style="color:var(--accent);opacity:0.7;">Waiting On</div>
-        </div>
-      </div>
-    </div>
-
     <!-- TOOLBAR -->
     <div class="toolbar" id="toolbar">
       <div class="toolbar-group">
@@ -1785,8 +1636,6 @@ const DEFAULT_STATE = {
 
 let state = JSON.parse(JSON.stringify(DEFAULT_STATE));
 
-let editingTaskId = null;
-
 // ===================== FIRESTORE PERSISTENCE =====================
 function getDocRef() {
   return firebaseDb.collection('appData').doc('shared');
@@ -2074,7 +1923,7 @@ function render() {
   // Reset view elements for task views
   currentWsView = null;
   document.getElementById('toolbar').style.display = '';
-  document.getElementById('dashStats').style.display = '';
+
 
   const searchTerm = getSearchTerm();
   document.getElementById('toolbar').style.display = '';
@@ -2123,7 +1972,21 @@ function render() {
 
   // Render occurrences section
   if (viewOccs.length > 0) {
-    viewOccs.sort((a, b) => (a.dueDate || '').localeCompare(b.dueDate || ''));
+    const { sortBy, sortDir } = state.prefs;
+    const dir = sortDir === 'asc' ? 1 : -1;
+    viewOccs.sort((a, b) => {
+      let cmp = 0;
+      if (sortBy === 'dueDate') {
+        cmp = (a.dueDate || '9999-99-99').localeCompare(b.dueDate || '9999-99-99');
+      } else if (sortBy === 'priority') {
+        cmp = (PRIORITY_ORDER[a.priority] || 3) - (PRIORITY_ORDER[b.priority] || 3);
+      } else if (sortBy === 'createdAt') {
+        cmp = (a.createdAt || '').localeCompare(b.createdAt || '');
+      } else if (sortBy === 'title') {
+        cmp = (a.title || '').localeCompare(b.title || '');
+      }
+      return cmp * dir;
+    });
     html += `<div class="group-header" onclick="toggleGroup('_occurrences')">
       <span class="arrow ${state.prefs.collapsedGroups['_occurrences'] ? 'collapsed' : ''}">&#9660;</span>
       Work Stream Items
@@ -2182,11 +2045,10 @@ function renderTaskCard(t) {
   if (t.completed) cls += ' completed-task';
   if (t.waitingOn) cls += ' waiting-on';
 
-  return `<div class="${cls}" onclick="openTaskModal('${t.id}')">
+  return `<div class="${cls}">
     <button class="task-checkbox ${t.completed ? 'checked' : ''}" onclick="event.stopPropagation();toggleComplete('${t.id}')">
       ${t.completed ? '&#10003;' : ''}
     </button>
-    ${!t.completed ? `<button class="focus-task-btn" onclick="event.stopPropagation();openFocusTimer('${t.id}')" title="Focus on this task">&#127813;</button>` : ''}
     <div class="task-card-body">
       <div class="task-title">${esc(t.title)}</div>
       <div class="task-meta">
@@ -2241,23 +2103,6 @@ function updateCounts() {
   document.getElementById('countWaiting').textContent = waitingCount;
   document.getElementById('countCompleted').textContent = completedTasks + completedOccs;
 
-  // Dashboard stats bar
-  document.getElementById('dashToday').textContent = todayCount;
-  document.getElementById('dashOverdue').textContent = overdueCount;
-  document.getElementById('dashWeek').textContent = weekCount;
-  document.getElementById('dashActiveWs').textContent = activeWsCount;
-  const dashWaitEl = document.getElementById('dashWaiting');
-  if (dashWaitEl) dashWaitEl.textContent = waitingCount;
-
-  // Greeting
-  const hour = new Date().getHours();
-  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
-  document.getElementById('dashGreeting').textContent = greeting;
-  document.getElementById('dashDate').textContent = new Date().toLocaleDateString('en-US', { weekday:'long', month:'long', day:'numeric', year:'numeric' });
-
-  // Pulse overdue card if > 0
-  const overdueCard = document.querySelector('.dash-card-overdue');
-  if (overdueCard) overdueCard.classList.toggle('has-items', overdueCount > 0);
 }
 
 // ===================== SIDEBAR =====================
@@ -2308,6 +2153,8 @@ function updateFilterChips() {
 // ===================== VIEW SWITCHING =====================
 function switchView(view) {
   state.prefs.currentView = view;
+  state.prefs.filters = [];
+  viewAreaFilter = '';
   saveState();
   render();
   if (isMobile()) closeSidebarMobile();
@@ -2455,7 +2302,6 @@ function renderCalendar() {
   if (!calYear) initCalDate();
   const container = document.getElementById('taskListContainer');
   document.getElementById('toolbar').style.display = 'none';
-  document.getElementById('dashStats').style.display = 'none';
   const today = todayStr();
 
   // Filter chips
@@ -2721,8 +2567,6 @@ function calEventClick(type, id) {
   closeCalDayDetail();
   if (type === 'occ') {
     openOccurrenceModal(id);
-  } else {
-    openTaskModal(id);
   }
 }
 
@@ -3030,7 +2874,6 @@ function showWorkStreamDetail(wsId) {
 
   const container = document.getElementById('taskListContainer');
   document.getElementById('toolbar').style.display = 'none';
-  document.getElementById('dashStats').style.display = 'none';
 
   let checklistHtml = '';
   if (ws.checklistTemplate && ws.checklistTemplate.length > 0) {
@@ -3598,10 +3441,6 @@ document.addEventListener('keydown', function(e) {
       document.activeElement.blur();
       closeAllModals();
     }
-    if (e.key === 'Enter' && document.activeElement.id === 'quickCaptureInput') {
-      if (isVoiceRecording) stopVoiceCapture();
-      addInboxItemFromCapture();
-    }
     return;
   }
 
@@ -3830,7 +3669,6 @@ function startLocalMode() {
     if (saved) {
       const parsed = JSON.parse(saved);
       state.tasks = parsed.tasks || [];
-      state.inbox = parsed.inbox || [];
       state.areas = parsed.areas || JSON.parse(JSON.stringify(DEFAULT_AREAS));
       state.workStreams = parsed.workStreams || [];
       state.occurrences = parsed.occurrences || [];
@@ -3914,7 +3752,6 @@ function bootApp() {
   }
   document.getElementById('currentUserLabel').textContent = currentUser.email.split('@')[0];
   render();
-  checkAutoMorningBrief();
 }
 
 // Initialize Firebase and listen for auth state
