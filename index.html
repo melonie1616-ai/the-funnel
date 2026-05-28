@@ -75,6 +75,136 @@
   --shadow-md: 0 4px 6px rgba(0,0,0,0.3);
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
 }
+/* ===================== CALENDAR ===================== */
+.cal-container { padding:16px 20px; max-width:1100px; }
+.cal-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;
+}
+.cal-header h2 { font-size:20px; font-weight:700; }
+.cal-nav { display:flex; align-items:center; gap:8px; }
+.cal-nav button {
+  background:var(--bg-card); border:1px solid var(--border); color:var(--text);
+  padding:6px 12px; border-radius:var(--radius-sm); cursor:pointer; font-size:13px; font-weight:600;
+  transition:all 0.15s;
+}
+.cal-nav button:hover { background:var(--accent-light); border-color:var(--accent); color:var(--accent); }
+.cal-nav button.active { background:var(--accent); color:#fff; border-color:var(--accent); }
+.cal-filters {
+  display:flex; gap:6px; flex-wrap:wrap; margin-bottom:14px;
+}
+.cal-filter-chip {
+  display:inline-flex; align-items:center; gap:4px;
+  padding:4px 10px; border-radius:16px; font-size:11px; font-weight:600;
+  cursor:pointer; border:2px solid transparent; transition:all 0.15s; user-select:none;
+  opacity:0.45;
+}
+.cal-filter-chip.on { opacity:1; border-color:currentColor; }
+
+.cal-grid {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  background:var(--border);  gap:1px;
+}
+.cal-day-header {
+  background:var(--bg-card); padding:6px 4px; text-align:center;
+  font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;
+}
+.cal-day {
+  background:var(--bg-card); min-height:90px; padding:4px 5px;
+  cursor:pointer; transition:background 0.15s; position:relative;
+}
+.cal-day:hover { background:var(--accent-light); }
+.cal-day.other-month { opacity:0.35; }
+.cal-day.today { background:var(--accent-light); }
+.cal-day .cal-date {
+  font-size:12px; font-weight:600; margin-bottom:3px; color:var(--text);
+}
+.cal-day.today .cal-date { color:var(--accent); font-weight:800; }
+.cal-event {
+  display:block; padding:1px 5px; margin-bottom:2px; border-radius:4px;
+  font-size:10px; font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+  color:#fff; cursor:pointer; line-height:1.5; transition:opacity 0.15s;
+}
+.cal-event:hover { opacity:0.85; }
+.cal-event.task-event {
+  background:var(--text-muted); color:#fff;
+}
+.cal-more {
+  font-size:10px; color:var(--accent); font-weight:600; cursor:pointer; padding:1px 5px;
+}
+
+/* Week view */
+.cal-week-grid {
+  display:grid; grid-template-columns:repeat(7,1fr);
+  border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  background:var(--border); gap:1px;
+}
+.cal-week-day {
+  background:var(--bg-card); min-height:200px; padding:8px;
+  cursor:pointer; transition:background 0.15s;
+}
+.cal-week-day:hover { background:var(--accent-light); }
+.cal-week-day.today { background:var(--accent-light); }
+.cal-week-day .cal-week-header {
+  font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase;
+  margin-bottom:4px; letter-spacing:0.3px;
+}
+.cal-week-day.today .cal-week-header { color:var(--accent); }
+.cal-week-day .cal-week-date {
+  font-size:18px; font-weight:800; margin-bottom:8px; color:var(--text);
+}
+.cal-week-day.today .cal-week-date { color:var(--accent); }
+.cal-week-event {
+  display:flex; align-items:center; gap:5px; padding:4px 6px; margin-bottom:4px;
+  border-radius:6px; font-size:12px; cursor:pointer; transition:background 0.15s;
+  border-left:3px solid transparent; background:var(--bg);
+}
+.cal-week-event:hover { background:var(--accent-light); }
+.cal-week-event .cal-ev-dot {
+  width:7px; height:7px; border-radius:50%; flex-shrink:0;
+}
+.cal-week-event .cal-ev-title {
+  flex:1; min-width:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-weight:500;
+}
+.cal-week-event .cal-ev-status {
+  font-size:10px; opacity:0.6;
+}
+
+/* Day detail panel */
+.cal-day-detail {
+  position:fixed; top:0; right:0; width:360px; height:100vh; background:var(--bg-card);
+  box-shadow:-4px 0 20px rgba(0,0,0,0.15); z-index:2000; padding:24px;
+  transform:translateX(100%); transition:transform 0.25s ease; overflow-y:auto;
+}
+.cal-day-detail.open { transform:translateX(0); }
+.cal-day-detail-header {
+  display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;
+}
+.cal-day-detail-header h3 { font-size:18px; font-weight:700; }
+.cal-day-detail-close {
+  background:none; border:none; font-size:20px; color:var(--text-muted); cursor:pointer;
+}
+.cal-detail-item {
+  display:flex; align-items:center; gap:8px; padding:10px 8px;
+  border-bottom:1px solid var(--border); cursor:pointer; border-radius:var(--radius-sm);
+  transition:background 0.15s;
+}
+.cal-detail-item:hover { background:var(--bg); }
+.cal-detail-item:last-child { border-bottom:none; }
+.cal-detail-dot { width:8px; height:8px; border-radius:50%; flex-shrink:0; }
+.cal-detail-info { flex:1; min-width:0; }
+.cal-detail-title { font-size:13px; font-weight:500; }
+.cal-detail-meta { font-size:11px; color:var(--text-muted); }
+.cal-detail-status { font-size:11px; font-weight:600; padding:2px 6px; border-radius:8px; }
+
+@media (max-width:768px) {
+  .cal-day { min-height:60px; }
+  .cal-event { font-size:9px; padding:1px 3px; }
+  .cal-day-detail { width:100vw; }
+  .cal-week-day { min-height:120px; padding:6px; }
+  .cal-header h2 { font-size:16px; }
+}
+
 /* ===================== WORK STREAMS ===================== */
 .area-dot {
   display:inline-block; width:10px; height:10px; border-radius:50%; margin-right:6px; flex-shrink:0;
@@ -1303,6 +1433,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
     <div class="sidebar-section">
       <div class="sidebar-heading">Views</div>
+      <div class="sidebar-item" data-view="calendar" onclick="switchView('calendar')">&#128197; Calendar</div>
       <div class="sidebar-item active" data-view="all" onclick="switchView('all')">&#128203; All Tasks <span class="count" id="countAll">0</span></div>
       <div class="sidebar-item" data-view="today" onclick="switchView('today')">&#9728; Today <span class="count" id="countToday">0</span></div>
       <div class="sidebar-item" data-view="tomorrow" onclick="switchView('tomorrow')">&#127749; Tomorrow <span class="count" id="countTomorrow">0</span></div>
@@ -1938,6 +2069,15 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 </div>
 
+<!-- Calendar day detail slide-out -->
+<div class="cal-day-detail" id="calDayDetail">
+  <div class="cal-day-detail-header">
+    <h3 id="calDayDetailTitle"></h3>
+    <button class="cal-day-detail-close" onclick="closeCalDayDetail()">&times;</button>
+  </div>
+  <div id="calDayDetailBody"></div>
+</div>
+
 </div><!-- /appContainer -->
 
 <script>
@@ -2361,6 +2501,13 @@ function render() {
 
   const container = document.getElementById('taskListContainer');
   const view = state.prefs.currentView;
+
+  // Calendar view
+  if (view === 'calendar') {
+    currentWsView = null;
+    renderCalendar();
+    return;
+  }
 
   // If viewing a work stream, show its detail instead of task list
   if (view.startsWith('workstream:')) {
@@ -3055,6 +3202,287 @@ function deleteCategory(name) {
   saveState();
   renderCategoryManageList();
   render();
+}
+
+// ===================== CALENDAR =====================
+let calYear, calMonth, calViewMode = 'month';
+let calFilterAreas = null; // null = show all
+let calWeekStart = null;
+
+function initCalDate() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  calWeekStart = getWeekStart(now);
+}
+
+function getWeekStart(d) {
+  const dt = new Date(d);
+  dt.setDate(dt.getDate() - dt.getDay());
+  dt.setHours(0,0,0,0);
+  return dt;
+}
+
+function getCalEvents(dateStr) {
+  const items = [];
+  // Occurrences
+  state.occurrences.forEach(o => {
+    if (o.dueDate === dateStr && o.status !== 'done') {
+      const ws = state.workStreams.find(w => w.id === o.workStreamId);
+      const area = ws ? getAreaById(ws.areaId) : null;
+      if (calFilterAreas && area && !calFilterAreas.has(area.id)) return;
+      items.push({ type:'occ', id:o.id, title:o.title, color:area?.color || '#94a3b8', status:o.status, areaName:area?.name || '', wsName:ws?.name || '' });
+    }
+  });
+  // Tasks with due dates
+  state.tasks.forEach(t => {
+    if (t.dueDate === dateStr && !t.completed) {
+      if (calFilterAreas) return; // hide tasks when filtering by area
+      items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:'task', areaName:t.category || '', wsName:'' });
+    }
+  });
+  return items;
+}
+
+function renderCalendar() {
+  if (!calYear) initCalDate();
+  const container = document.getElementById('taskListContainer');
+  document.getElementById('toolbar').style.display = 'none';
+  document.getElementById('dashStats').style.display = 'none';
+  const today = todayStr();
+
+  // Filter chips
+  let filterHtml = '<div class="cal-filters">';
+  filterHtml += `<span class="cal-filter-chip ${!calFilterAreas ? 'on' : ''}" style="color:var(--text);background:var(--bg);" onclick="setCalFilter(null)">All</span>`;
+  state.areas.forEach(a => {
+    const isOn = !calFilterAreas || calFilterAreas.has(a.id);
+    filterHtml += `<span class="cal-filter-chip ${isOn && calFilterAreas ? 'on' : (!calFilterAreas ? 'on' : '')}" style="color:${a.color};background:${a.color}15;" onclick="toggleCalFilter('${a.id}')">`
+      + `<span class="area-dot" style="background:${a.color}"></span>${esc(a.name)}</span>`;
+  });
+  filterHtml += '</div>';
+
+  if (calViewMode === 'month') {
+    container.innerHTML = renderCalMonth(today, filterHtml);
+  } else {
+    container.innerHTML = renderCalWeek(today, filterHtml);
+  }
+}
+
+function renderCalMonth(today, filterHtml) {
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth + 1, 0).getDate();
+  const daysInPrev = new Date(calYear, calMonth, 0).getDate();
+
+  let html = `<div class="cal-container">`;
+  html += `<div class="cal-header">
+    <div class="cal-nav">
+      <button onclick="calPrev()">&larr;</button>
+      <h2>${monthNames[calMonth]} ${calYear}</h2>
+      <button onclick="calNext()">&rarr;</button>
+      <button onclick="calToday()">Today</button>
+    </div>
+    <div class="cal-nav">
+      <button class="${calViewMode==='month'?'active':''}" onclick="setCalViewMode('month')">Month</button>
+      <button class="${calViewMode==='week'?'active':''}" onclick="setCalViewMode('week')">Week</button>
+    </div>
+  </div>`;
+  html += filterHtml;
+  html += `<div class="cal-grid">`;
+  dayNames.forEach(d => { html += `<div class="cal-day-header">${d}</div>`; });
+
+  // Previous month padding
+  for (let i = firstDay - 1; i >= 0; i--) {
+    const day = daysInPrev - i;
+    const m = calMonth === 0 ? 11 : calMonth - 1;
+    const y = calMonth === 0 ? calYear - 1 : calYear;
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    html += renderCalDayCell(ds, day, true, today);
+  }
+  // Current month
+  for (let day = 1; day <= daysInMonth; day++) {
+    const ds = `${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    html += renderCalDayCell(ds, day, false, today);
+  }
+  // Next month padding
+  const totalCells = firstDay + daysInMonth;
+  const remaining = (7 - (totalCells % 7)) % 7;
+  for (let day = 1; day <= remaining; day++) {
+    const m = calMonth === 11 ? 0 : calMonth + 1;
+    const y = calMonth === 11 ? calYear + 1 : calYear;
+    const ds = `${y}-${String(m+1).padStart(2,'0')}-${String(day).padStart(2,'0')}`;
+    html += renderCalDayCell(ds, day, true, today);
+  }
+
+  html += `</div></div>`;
+  return html;
+}
+
+function renderCalDayCell(dateStr, day, isOther, today) {
+  const events = getCalEvents(dateStr);
+  const isToday = dateStr === today;
+  const cls = `cal-day${isOther ? ' other-month' : ''}${isToday ? ' today' : ''}`;
+  let html = `<div class="${cls}" onclick="openCalDayDetail('${dateStr}')">`;
+  html += `<div class="cal-date">${day}</div>`;
+  const maxShow = 3;
+  events.slice(0, maxShow).forEach(ev => {
+    html += `<div class="cal-event${ev.type==='task'?' task-event':''}" style="${ev.type!=='task'?'background:'+ev.color:''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}</div>`;
+  });
+  if (events.length > maxShow) {
+    html += `<div class="cal-more">+${events.length - maxShow} more</div>`;
+  }
+  html += `</div>`;
+  return html;
+}
+
+function renderCalWeek(today, filterHtml) {
+  if (!calWeekStart) calWeekStart = getWeekStart(new Date());
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const weekEnd = new Date(calWeekStart);
+  weekEnd.setDate(weekEnd.getDate() + 6);
+  const label = `${monthNames[calWeekStart.getMonth()]} ${calWeekStart.getDate()} - ${monthNames[weekEnd.getMonth()]} ${weekEnd.getDate()}, ${weekEnd.getFullYear()}`;
+
+  let html = `<div class="cal-container">`;
+  html += `<div class="cal-header">
+    <div class="cal-nav">
+      <button onclick="calPrev()">&larr;</button>
+      <h2>${label}</h2>
+      <button onclick="calNext()">&rarr;</button>
+      <button onclick="calToday()">Today</button>
+    </div>
+    <div class="cal-nav">
+      <button class="${calViewMode==='month'?'active':''}" onclick="setCalViewMode('month')">Month</button>
+      <button class="${calViewMode==='week'?'active':''}" onclick="setCalViewMode('week')">Week</button>
+    </div>
+  </div>`;
+  html += filterHtml;
+  html += `<div class="cal-week-grid">`;
+
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(calWeekStart);
+    d.setDate(d.getDate() + i);
+    const ds = localDateStr(d);
+    const isToday = ds === today;
+    const events = getCalEvents(ds);
+    html += `<div class="cal-week-day${isToday ? ' today' : ''}" onclick="openCalDayDetail('${ds}')">`;
+    html += `<div class="cal-week-header">${dayNames[d.getDay()]}</div>`;
+    html += `<div class="cal-week-date">${d.getDate()}</div>`;
+    events.forEach(ev => {
+      html += `<div class="cal-week-event" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')">
+        <span class="cal-ev-dot" style="background:${ev.color}"></span>
+        <span class="cal-ev-title">${esc(ev.title)}</span>
+        ${ev.status === 'in-progress' ? '<span class="cal-ev-status">&#9654;</span>' : ''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</div></div>`;
+  return html;
+}
+
+// Calendar navigation
+function calPrev() {
+  if (calViewMode === 'month') {
+    calMonth--;
+    if (calMonth < 0) { calMonth = 11; calYear--; }
+  } else {
+    calWeekStart.setDate(calWeekStart.getDate() - 7);
+  }
+  renderCalendar();
+}
+function calNext() {
+  if (calViewMode === 'month') {
+    calMonth++;
+    if (calMonth > 11) { calMonth = 0; calYear++; }
+  } else {
+    calWeekStart.setDate(calWeekStart.getDate() + 7);
+  }
+  renderCalendar();
+}
+function calToday() {
+  const now = new Date();
+  calYear = now.getFullYear();
+  calMonth = now.getMonth();
+  calWeekStart = getWeekStart(now);
+  renderCalendar();
+}
+function setCalViewMode(mode) {
+  calViewMode = mode;
+  if (mode === 'week' && !calWeekStart) calWeekStart = getWeekStart(new Date());
+  renderCalendar();
+}
+
+// Calendar filters
+function setCalFilter(areaId) {
+  calFilterAreas = null;
+  renderCalendar();
+}
+function toggleCalFilter(areaId) {
+  if (!calFilterAreas) {
+    calFilterAreas = new Set([areaId]);
+  } else if (calFilterAreas.has(areaId)) {
+    calFilterAreas.delete(areaId);
+    if (calFilterAreas.size === 0) calFilterAreas = null;
+  } else {
+    calFilterAreas.add(areaId);
+  }
+  renderCalendar();
+}
+
+// Day detail panel
+function openCalDayDetail(dateStr) {
+  const panel = document.getElementById('calDayDetail');
+  const d = new Date(dateStr + 'T12:00:00');
+  const dayNames = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+  const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calDayDetailTitle').textContent = `${dayNames[d.getDay()]}, ${monthNames[d.getMonth()]} ${d.getDate()}`;
+
+  const events = getCalEvents(dateStr);
+  // Also include completed occurrences for that day
+  state.occurrences.forEach(o => {
+    if (o.dueDate === dateStr && o.status === 'done') {
+      const ws = state.workStreams.find(w => w.id === o.workStreamId);
+      const area = ws ? getAreaById(ws.areaId) : null;
+      if (calFilterAreas && area && !calFilterAreas.has(area.id)) return;
+      if (!events.find(e => e.id === o.id)) {
+        events.push({ type:'occ', id:o.id, title:o.title, color:area?.color||'#94a3b8', status:'done', areaName:area?.name||'', wsName:ws?.name||'' });
+      }
+    }
+  });
+
+  const body = document.getElementById('calDayDetailBody');
+  if (events.length === 0) {
+    body.innerHTML = '<p style="color:var(--text-muted);font-size:13px;padding:8px 0;">Nothing scheduled for this day.</p>';
+  } else {
+    body.innerHTML = events.map(ev => {
+      const statusLabel = ev.status === 'done' ? '&#10003; Done' : ev.status === 'in-progress' ? '&#9654; In Progress' : 'To Do';
+      const statusColor = ev.status === 'done' ? 'var(--success)' : ev.status === 'in-progress' ? 'var(--accent)' : 'var(--text-muted)';
+      return `<div class="cal-detail-item" onclick="calEventClick('${ev.type}','${ev.id}')">
+        <span class="cal-detail-dot" style="background:${ev.color}"></span>
+        <div class="cal-detail-info">
+          <div class="cal-detail-title">${esc(ev.title)}</div>
+          <div class="cal-detail-meta">${esc(ev.areaName)}${ev.wsName ? ' / ' + esc(ev.wsName) : ''}</div>
+        </div>
+        <span class="cal-detail-status" style="color:${statusColor}">${statusLabel}</span>
+      </div>`;
+    }).join('');
+  }
+  panel.classList.add('open');
+}
+
+function closeCalDayDetail() {
+  document.getElementById('calDayDetail').classList.remove('open');
+}
+
+function calEventClick(type, id) {
+  closeCalDayDetail();
+  if (type === 'occ') {
+    openOccurrenceModal(id);
+  } else {
+    openTaskModal(id);
+  }
 }
 
 // ===================== AREA MANAGEMENT =====================
