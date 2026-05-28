@@ -1144,19 +1144,15 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     </svg>
     The Funnel
   </div>
-  <button class="topbar-icon-btn btn-export" onclick="exportData()" data-tooltip="Export Data">&#128229;</button>
-  <button class="topbar-icon-btn btn-import" onclick="document.getElementById('importFile').click()" data-tooltip="Import Data">&#128228;</button>
   <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
-  <button class="topbar-icon-btn btn-export" id="syncBtn" onclick="syncNow()" data-tooltip="Sync Data">&#128260;</button>
-  <button class="topbar-icon-btn btn-settings" id="notifBtn" onclick="toggleNotifications()" data-tooltip="Notifications: Off">&#128276;</button>
-  <button class="topbar-icon-btn btn-settings" id="darkModeBtn" onclick="toggleDarkMode()" data-tooltip="Toggle Dark Mode">&#127763;</button>
-  <button class="topbar-icon-btn btn-settings" onclick="openSettings()" data-tooltip="Settings">&#9881;</button>
   <div class="topbar-user">
     <div class="team-toggle" id="teamToggle">
       <button onclick="setTeamScope('mine')" id="btnScopeMine">My Work</button>
       <button class="active" onclick="setTeamScope('team')" id="btnScopeTeam">Team</button>
     </div>
     <span id="currentUserLabel"></span>
+    <button id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle Dark Mode" style="font-size:14px;padding:4px 8px;">&#127763;</button>
+    <button onclick="openSettings()" title="Settings" style="font-size:14px;padding:4px 8px;">&#9881;</button>
     <button onclick="doLogout()">Sign Out</button>
   </div>
 </div>
@@ -1502,9 +1498,15 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         <div id="syncStatus" style="font-size:12px;color:var(--text-muted);margin-top:8px;min-height:18px;"></div>
       </div>
       <div class="settings-group">
-        <h3>Data</h3>
-        <p>Tasks and projects are stored in your browser's localStorage.</p>
-        <button class="btn btn-danger" onclick="if(confirm('Delete ALL data? This cannot be undone.')){localStorage.clear();location.reload();}">Clear All Data</button>
+        <h3>Data Management</h3>
+        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+          <button class="btn btn-secondary" onclick="exportData()" style="font-size:12px;">&#128229; Export Data</button>
+          <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="font-size:12px;">&#128228; Import Data</button>
+          <button class="btn btn-secondary" onclick="syncNow()" style="font-size:12px;">&#128260; Sync Now</button>
+        </div>
+        <div style="margin-top:12px;">
+          <button class="btn btn-danger" onclick="if(confirm('Delete ALL data? This cannot be undone.')){localStorage.clear();location.reload();}">Clear All Data</button>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -3619,82 +3621,6 @@ function initStickyNote() {
 }
 
 
-// ===================== NOTIFICATIONS =====================
-let notifInterval = null;
-
-function toggleNotifications() {
-  if (state.prefs.notificationsEnabled) {
-    state.prefs.notificationsEnabled = false;
-    clearInterval(notifInterval);
-    notifInterval = null;
-    updateNotifBtn();
-    saveState();
-    return;
-  }
-  if (!('Notification' in window)) { alert('Your browser does not support notifications.'); return; }
-  Notification.requestPermission().then(perm => {
-    if (perm === 'granted') {
-      state.prefs.notificationsEnabled = true;
-      startNotifCheck();
-      updateNotifBtn();
-      saveState();
-      new Notification('The Funnel', { body: 'Notifications enabled! You will be reminded about due tasks.', icon: '📋' });
-    } else {
-      alert('Notification permission was denied. Please allow it in your browser settings.');
-    }
-  });
-}
-
-function updateNotifBtn() {
-  const btn = document.getElementById('notifBtn');
-  if (!btn) return;
-  if (state.prefs.notificationsEnabled) {
-    btn.innerHTML = '&#128277;';
-    btn.setAttribute('data-tooltip', 'Notifications: ON (click to disable)');
-    btn.style.color = 'var(--success)';
-  } else {
-    btn.innerHTML = '&#128276;';
-    btn.setAttribute('data-tooltip', 'Notifications: OFF (click to enable)');
-    btn.style.color = '';
-  }
-}
-
-function startNotifCheck() {
-  if (notifInterval) clearInterval(notifInterval);
-  checkDueNotifications();
-  // Check every 30 minutes
-  notifInterval = setInterval(checkDueNotifications, 30 * 60 * 1000);
-}
-
-function checkDueNotifications() {
-  if (!state.prefs.notificationsEnabled || Notification.permission !== 'granted') return;
-  const today = todayStr();
-  const active = state.tasks.filter(t => !t.completed);
-  const overdueTasks = active.filter(t => t.dueDate && t.dueDate < today);
-  const todayTasks = active.filter(t => t.dueDate === today);
-  const lastNotif = state.prefs.lastNotifDate || '';
-
-  // Only notify once per day
-  if (lastNotif === today) return;
-  state.prefs.lastNotifDate = today;
-  saveState();
-
-  if (overdueTasks.length > 0) {
-    new Notification('Overdue Tasks!', {
-      body: `You have ${overdueTasks.length} overdue task(s). Time to catch up!`,
-      tag: 'funnel-overdue'
-    });
-  }
-  if (todayTasks.length > 0) {
-    setTimeout(() => {
-      new Notification('Today\'s Tasks', {
-        body: `${todayTasks.length} task(s) due today: ${todayTasks.slice(0,3).map(t=>t.title).join(', ')}${todayTasks.length > 3 ? '...' : ''}`,
-        tag: 'funnel-today'
-      });
-    }, 2000);
-  }
-}
-
 // ===================== DARK MODE =====================
 function toggleDarkMode() {
   const modes = ['auto', 'dark', 'light'];
@@ -3813,9 +3739,7 @@ function seedWorkStreams() {
 function bootApp() {
   seedWorkStreams();
   applyDarkMode();
-  updateNotifBtn();
   initStickyNote();
-  if (state.prefs.notificationsEnabled && Notification.permission === 'granted') startNotifCheck();
   if (!isMobile() && !state.prefs.sidebarOpen) {
     document.getElementById('sidebar').classList.add('collapsed');
   }
