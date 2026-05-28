@@ -1440,7 +1440,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       </div>
       <div class="form-group">
         <label>Notes</label>
-        <textarea id="occNotesInput" placeholder="Notes for this occurrence..." style="min-height:80px"></textarea>
+        <textarea id="occNotesInput" placeholder="" style="min-height:80px"></textarea>
       </div>
       <div class="form-group" id="occChecklistGroup">
         <label>Checklist</label>
@@ -2909,7 +2909,7 @@ function showWorkStreamDetail(wsId) {
   const doneOccs = occs.filter(o => o.status === 'done');
 
   if (pendingOccs.length === 0 && doneOccs.length === 0) {
-    occsHtml = `<p style="color:var(--text-muted);font-size:13px;">No occurrences yet. Click "Generate Next" to create upcoming instances.</p>`;
+    occsHtml = `<p style="color:var(--text-muted);font-size:13px;">No occurrences yet. Click "Generate Occurrences" to create upcoming instances.</p>`;
   } else {
     if (pendingOccs.length > 0) {
       occsHtml += pendingOccs.map(o => renderOccCard(o, today)).join('');
@@ -2930,7 +2930,7 @@ function showWorkStreamDetail(wsId) {
       <div class="ws-actions">
         <button onclick="openWorkStreamModal('${wsId}')">Edit</button>
         <button onclick="addAdHocOccurrence('${wsId}')">+ Add Item</button>
-        <button class="primary" onclick="generateOccurrences('${wsId}')">Generate Next</button>
+        <button class="primary" onclick="generateOccurrences('${wsId}')">Generate Occurrences</button>
       </div>
     </div>
     <div class="ws-detail-badges">
@@ -3225,6 +3225,7 @@ function addAdHocOccurrence(wsId) {
   assignSel.value = '';
   document.getElementById('occNotesInput').value = '';
   document.getElementById('occChecklistItems').innerHTML = '';
+  document.getElementById('occChecklistGroup').style.display = 'none';
   modal.style.display = 'flex';
   document.getElementById('occTitleInput').focus();
 }
@@ -3267,12 +3268,16 @@ function openOccurrenceModal(occId) {
     document.getElementById('occChecklistGroup').style.display = 'none';
   }
 
-  modal.classList.add('open');
+  modal.style.display = 'flex';
 }
 
 function closeOccurrenceModal() {
-  document.getElementById('occurrenceModal').classList.remove('open');
+  const modal = document.getElementById('occurrenceModal');
+  modal.classList.remove('open');
+  modal.style.display = 'none';
   editingOccId = null;
+  if (currentWsView) showWorkStreamDetail(currentWsView);
+  else render();
 }
 
 function saveOccurrence() {
