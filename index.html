@@ -266,13 +266,32 @@
   padding:2px 8px; border-radius:4px; cursor:pointer;
 }
 
-.ws-notes-editor {
-  width:100%; min-height:120px; padding:12px 14px; font-size:14px; line-height:1.6;
-  border:1px solid var(--border); border-radius:var(--radius-sm);
-  background:var(--bg); color:var(--text); resize:vertical; outline:none;
-  font-family:inherit;
+.rich-editor-wrap {
+  border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden;
 }
-.ws-notes-editor:focus { border-color:var(--accent); box-shadow:0 0 0 3px rgba(99,102,241,0.15); }
+.rich-toolbar {
+  display:flex; gap:2px; padding:4px 6px; background:var(--bg-card); border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.rich-toolbar button {
+  padding:3px 8px; font-size:12px; background:none; border:1px solid transparent;
+  border-radius:3px; cursor:pointer; color:var(--text-muted); font-weight:600;
+  transition:all 0.15s;
+}
+.rich-toolbar button:hover { background:var(--accent-light); color:var(--accent); border-color:var(--border); }
+.rich-editor {
+  width:100%; min-height:120px; padding:12px 14px; font-size:14px; line-height:1.6;
+  background:var(--bg); color:var(--text); outline:none; font-family:inherit;
+  overflow-y:auto; max-height:400px;
+}
+.rich-editor:focus { box-shadow:inset 0 0 0 2px rgba(99,102,241,0.15); }
+.rich-editor h1,.rich-editor h2,.rich-editor h3 { margin:8px 0 4px; }
+.rich-editor h1 { font-size:20px; }
+.rich-editor h2 { font-size:17px; }
+.rich-editor h3 { font-size:15px; }
+.rich-editor ul,.rich-editor ol { padding-left:24px; margin:4px 0; }
+.rich-editor a { color:var(--accent); text-decoration:underline; }
+.rich-editor blockquote { border-left:3px solid var(--accent); padding-left:12px; color:var(--text-muted); margin:8px 0; }
 
 .ws-checklist-item {
   display:flex; align-items:center; gap:10px; padding:8px 4px;
@@ -1439,7 +1458,17 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       </div>
       <div class="form-group">
         <label>Notes</label>
-        <textarea id="occNotesInput" placeholder="" style="min-height:80px"></textarea>
+        <div class="rich-editor-wrap">
+          <div class="rich-toolbar">
+            <button onclick="richCmdOcc('bold')" title="Bold"><b>B</b></button>
+            <button onclick="richCmdOcc('italic')" title="Italic"><i>I</i></button>
+            <button onclick="richCmdOcc('underline')" title="Underline"><u>U</u></button>
+            <button onclick="richCmdOcc('insertUnorderedList')" title="Bullet List">&#8226;</button>
+            <button onclick="richCmdOcc('insertOrderedList')" title="Numbered List">1.</button>
+            <button onclick="richInsertLinkOcc()" title="Insert Link">&#128279;</button>
+          </div>
+          <div class="rich-editor" id="occNotesRich" contenteditable="true" style="min-height:80px;"></div>
+        </div>
       </div>
       <div class="form-group" id="occChecklistGroup">
         <label>Checklist</label>
@@ -2948,7 +2977,24 @@ function showWorkStreamDetail(wsId) {
 
     <div class="ws-section">
       <div class="ws-section-title">Notes</div>
-      <textarea class="ws-notes-editor" placeholder="Add notes, processes, links..." oninput="saveWsNotes('${wsId}',this.value)">${esc(ws.notes || '')}</textarea>
+      <div class="rich-editor-wrap">
+        <div class="rich-toolbar">
+          <button onclick="richCmd('bold')" title="Bold"><b>B</b></button>
+          <button onclick="richCmd('italic')" title="Italic"><i>I</i></button>
+          <button onclick="richCmd('underline')" title="Underline"><u>U</u></button>
+          <button onclick="richCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+          <span style="width:1px;background:var(--border);margin:2px 4px;"></span>
+          <button onclick="richCmd('formatBlock','<h2>')" title="Heading">H</button>
+          <button onclick="richCmd('formatBlock','<h3>')" title="Subheading">H2</button>
+          <button onclick="richCmd('insertUnorderedList')" title="Bullet List">&#8226; List</button>
+          <button onclick="richCmd('insertOrderedList')" title="Numbered List">1. List</button>
+          <button onclick="richCmd('formatBlock','<blockquote>')" title="Quote">&#8220;</button>
+          <span style="width:1px;background:var(--border);margin:2px 4px;"></span>
+          <button onclick="richInsertLink()" title="Insert Link">&#128279; Link</button>
+          <button onclick="richCmd('removeFormat')" title="Clear Formatting">&#10006;</button>
+        </div>
+        <div class="rich-editor" id="wsNotesEditor" contenteditable="true" oninput="saveWsNotes('${wsId}')">${ws.notes || ''}</div>
+      </div>
     </div>
 
     <div class="ws-section">
@@ -3010,12 +3056,35 @@ function cycleOccStatus(occId) {
 
 // --- Notes & Checklist editing ---
 let wsNotesTimer = null;
-function saveWsNotes(wsId, value) {
+function saveWsNotes(wsId) {
   const ws = state.workStreams.find(w => w.id === wsId);
   if (!ws) return;
-  ws.notes = value;
+  const editor = document.getElementById('wsNotesEditor');
+  if (editor) ws.notes = editor.innerHTML;
   if (wsNotesTimer) clearTimeout(wsNotesTimer);
   wsNotesTimer = setTimeout(() => saveState(), 1000);
+}
+
+function richCmd(command, value) {
+  document.execCommand(command, false, value || null);
+  const editor = document.getElementById('wsNotesEditor') || document.getElementById('occNotesRich');
+  if (editor) editor.focus();
+}
+
+function richInsertLink() {
+  const url = prompt('Enter URL:');
+  if (url) document.execCommand('createLink', false, url);
+}
+
+function richCmdOcc(command, value) {
+  document.execCommand(command, false, value || null);
+  const editor = document.getElementById('occNotesRich');
+  if (editor) editor.focus();
+}
+
+function richInsertLinkOcc() {
+  const url = prompt('Enter URL:');
+  if (url) document.execCommand('createLink', false, url);
 }
 
 function updateWsChecklistItem(wsId, idx, value) {
@@ -3230,7 +3299,7 @@ function addAdHocOccurrence(wsId) {
     assignSel.innerHTML += `<option value="${esc(email)}">${esc(email.split('@')[0])}</option>`;
   });
   assignSel.value = '';
-  document.getElementById('occNotesInput').value = '';
+  document.getElementById('occNotesRich').innerHTML = '';
   document.getElementById('occChecklistItems').innerHTML = '';
   document.getElementById('occChecklistGroup').style.display = 'none';
   modal.style.display = 'flex';
@@ -3260,7 +3329,7 @@ function openOccurrenceModal(occId) {
   });
   assignSel.value = o.assignee || '';
 
-  document.getElementById('occNotesInput').value = o.notes || '';
+  document.getElementById('occNotesRich').innerHTML = o.notes || '';
 
   const clContainer = document.getElementById('occChecklistItems');
   if (o.checklist && o.checklist.length > 0) {
@@ -3305,7 +3374,7 @@ function saveOccurrence() {
   o.status = document.getElementById('occStatusInput').value;
   o.priority = document.getElementById('occPriorityInput').value;
   o.assignee = document.getElementById('occAssigneeInput').value;
-  o.notes = document.getElementById('occNotesInput').value;
+  o.notes = document.getElementById('occNotesRich').innerHTML;
   if (o.status === 'done' && !o.completedAt) o.completedAt = new Date().toISOString();
   if (o.status !== 'done') o.completedAt = null;
   saveState();
