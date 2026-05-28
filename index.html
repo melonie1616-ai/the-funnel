@@ -834,7 +834,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   padding:6px 10px; margin-bottom:3px; border-radius:var(--radius-sm);
 }
 .compact .occ-card .occ-title { font-size:13px; }
-.compact .occ-card .occ-meta { display:none; }
+.compact .occ-card .occ-meta { font-size:11px; gap:6px; }
 .compact .task-notes-preview { display:none; }
 .compact .subtask-progress-bar { display:none; }
 
@@ -3089,7 +3089,7 @@ function renderOccCard(o, today) {
       <div class="occ-title">${esc(o.title)}</div>
       <div class="occ-meta">
         ${area ? `<span class="area-dot" style="background:${area.color};width:8px;height:8px;display:inline-block;border-radius:50%;"></span><span style="font-size:11px;color:var(--text-muted);">${esc(area.name)}</span>` : ''}
-        ${ws ? `<span style="font-size:11px;color:var(--text-muted);">${esc(ws.name)}</span>` : ''}
+        ${ws ? `<span style="font-size:11px;color:var(--text-muted);">${area ? '&rsaquo; ' : ''}${esc(ws.name)}</span>` : ''}
         ${checkTotal > 0 ? `<span class="occ-progress">&#9745; ${checkDone}/${checkTotal}</span>` : ''}
         ${o.assignee ? `<span style="font-size:11px;">${esc(o.assignee.split('@')[0])}</span>` : ''}
       </div>
