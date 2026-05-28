@@ -1581,6 +1581,35 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 </div>
 
+<!-- GENERATE OCCURRENCES MODAL -->
+<div class="modal-overlay" id="generateModal">
+  <div class="modal" style="width:420px">
+    <div class="modal-header">
+      <h2>Generate Occurrences</h2>
+      <button class="modal-close" onclick="closeGenerateModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p id="genWsName" style="font-weight:600;margin-bottom:4px;"></p>
+      <p id="genCadenceLabel" style="font-size:13px;color:var(--text-muted);margin-bottom:16px;"></p>
+      <div class="form-row">
+        <div class="form-group">
+          <label>Start Date</label>
+          <input type="date" id="genStartDate">
+        </div>
+        <div class="form-group">
+          <label>Number to create</label>
+          <input type="number" id="genCount" min="1" max="52" value="4">
+        </div>
+      </div>
+      <div id="genPreview" style="margin-top:8px;font-size:13px;color:var(--text-muted);max-height:150px;overflow-y:auto;"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeGenerateModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="confirmGenerate()">Create</button>
+    </div>
+  </div>
+</div>
+
 <!-- WORK STREAM MODAL -->
 <div class="modal-overlay" id="workStreamModal">
   <div class="modal" style="width:580px">
@@ -3473,85 +3502,138 @@ function addWsChecklistItem(wsId) {
 }
 
 // --- Occurrence Generation ---
+let generateWsId = null;
+
 function generateOccurrences(wsId) {
   const ws = state.workStreams.find(w => w.id === wsId);
   if (!ws) return;
+  generateWsId = wsId;
+
+  document.getElementById('genWsName').textContent = ws.name;
+  document.getElementById('genCadenceLabel').textContent = 'Cadence: ' + getCadenceLabel(ws);
+  document.getElementById('genStartDate').value = todayStr();
+  document.getElementById('genCount').value = ws.cadence?.type === 'one-time' ? '1' : '4';
+  updateGenPreview();
+
+  document.getElementById('genStartDate').addEventListener('input', updateGenPreview);
+  document.getElementById('genCount').addEventListener('input', updateGenPreview);
+
+  document.getElementById('generateModal').classList.add('open');
+}
+
+function closeGenerateModal() {
+  document.getElementById('generateModal').classList.remove('open');
+  generateWsId = null;
+}
+
+function computeGenDates(wsId, startDateStr, count) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return [];
   const c = ws.cadence || { type: 'one-time' };
-  const today = new Date();
-  let datesToCreate = [];
+  const start = new Date(startDateStr + 'T12:00:00');
+  let dates = [];
 
   if (c.type === 'one-time') {
-    if (getOccurrencesForWs(wsId).length === 0) {
-      datesToCreate.push(localDateStr(today));
-    } else {
-      alert('This one-time work stream already has an occurrence.');
-      return;
-    }
+    dates.push(localDateStr(start));
   } else if (c.type === 'daily') {
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today); d.setDate(d.getDate() + i);
-      datesToCreate.push(localDateStr(d));
+    for (let i = 0; i < count; i++) {
+      const d = new Date(start); d.setDate(d.getDate() + i);
+      dates.push(localDateStr(d));
     }
   } else if (c.type === 'weekly') {
     const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
-    const days = (c.days && c.days.length > 0) ? c.days : ['mon'];
-    for (let w = 0; w < 4; w++) {
+    const days = (c.days && c.days.length > 0) ? c.days : [Object.keys(dayMap).find(k => dayMap[k] === start.getDay()) || 'mon'];
+    let week = 0;
+    while (dates.length < count) {
       days.forEach(day => {
-        const d = new Date(today);
-        d.setDate(d.getDate() + (w * 7) + ((dayMap[day] - d.getDay() + 7) % 7));
-        if (d >= today) datesToCreate.push(localDateStr(d));
+        const d = new Date(start);
+        d.setDate(start.getDate() + (week * 7) + ((dayMap[day] - start.getDay() + 7) % 7));
+        if (d >= start && dates.length < count) dates.push(localDateStr(d));
       });
+      week++;
+      if (week > 100) break;
     }
   } else if (c.type === 'xPerWeek') {
     const times = c.times || 2;
     const dayMap = { sun:0, mon:1, tue:2, wed:3, thu:4, fri:5, sat:6 };
     const days = (c.days && c.days.length >= times) ? c.days.slice(0, times) : ['mon','wed','fri'].slice(0, times);
-    for (let w = 0; w < 4; w++) {
+    let week = 0;
+    while (dates.length < count) {
       days.forEach(day => {
-        const d = new Date(today);
-        d.setDate(d.getDate() + (w * 7) + ((dayMap[day] - d.getDay() + 7) % 7));
-        if (d >= today) datesToCreate.push(localDateStr(d));
+        const d = new Date(start);
+        d.setDate(start.getDate() + (week * 7) + ((dayMap[day] - start.getDay() + 7) % 7));
+        if (d >= start && dates.length < count) dates.push(localDateStr(d));
       });
+      week++;
+      if (week > 100) break;
     }
   } else if (c.type === 'monthly') {
-    for (let m = 0; m < 3; m++) {
-      const d = new Date(today.getFullYear(), today.getMonth() + m, 15);
-      datesToCreate.push(localDateStr(d));
+    for (let m = 0; m < count; m++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + m, start.getDate());
+      dates.push(localDateStr(d));
     }
   } else if (c.type === 'xPerMonth') {
     const times = c.times || 2;
-    for (let m = 0; m < 3; m++) {
-      for (let t = 0; t < times; t++) {
+    let m = 0;
+    while (dates.length < count) {
+      for (let t = 0; t < times && dates.length < count; t++) {
         const dayOfMonth = Math.round((t + 1) * 28 / (times + 1));
-        const d = new Date(today.getFullYear(), today.getMonth() + m, dayOfMonth);
-        if (d >= today) datesToCreate.push(localDateStr(d));
+        const d = new Date(start.getFullYear(), start.getMonth() + m, dayOfMonth);
+        if (d >= start) dates.push(localDateStr(d));
       }
+      m++;
+      if (m > 50) break;
     }
   } else if (c.type === 'quarterly') {
-    const currentQ = Math.floor(today.getMonth() / 3);
-    for (let q = 0; q < 2; q++) {
-      const qMonth = (currentQ + q) * 3 + 1;
-      const d = new Date(today.getFullYear(), qMonth, 15);
-      if (d < today) d.setFullYear(d.getFullYear() + 1);
-      datesToCreate.push(localDateStr(d));
+    for (let q = 0; q < count; q++) {
+      const d = new Date(start.getFullYear(), start.getMonth() + (q * 3), start.getDate());
+      dates.push(localDateStr(d));
     }
   }
 
   const existingDates = new Set(getOccurrencesForWs(wsId).map(o => o.dueDate));
-  datesToCreate = datesToCreate.filter(d => !existingDates.has(d));
+  return dates.filter(d => !existingDates.has(d));
+}
 
-  if (datesToCreate.length === 0) {
-    alert('All upcoming occurrences already exist.');
+function updateGenPreview() {
+  if (!generateWsId) return;
+  const startDate = document.getElementById('genStartDate').value;
+  const count = parseInt(document.getElementById('genCount').value) || 1;
+  const dates = computeGenDates(generateWsId, startDate, count);
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+  if (dates.length === 0) {
+    document.getElementById('genPreview').innerHTML = '<em>All dates already have occurrences.</em>';
+    return;
+  }
+  const preview = dates.map(ds => {
+    const d = new Date(ds + 'T12:00:00');
+    return `<div style="padding:2px 0;">${dayNames[d.getDay()]}, ${monthNames[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}</div>`;
+  }).join('');
+  document.getElementById('genPreview').innerHTML = `<strong>${dates.length} occurrence(s) will be created:</strong>` + preview;
+}
+
+function confirmGenerate() {
+  if (!generateWsId) return;
+  const ws = state.workStreams.find(w => w.id === generateWsId);
+  if (!ws) return;
+  const startDate = document.getElementById('genStartDate').value;
+  const count = parseInt(document.getElementById('genCount').value) || 1;
+  const dates = computeGenDates(generateWsId, startDate, count);
+
+  if (dates.length === 0) {
+    alert('No new occurrences to create.');
     return;
   }
 
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  datesToCreate.forEach(dateStr => {
+  dates.forEach(dateStr => {
     const d = new Date(dateStr + 'T12:00:00');
     const label = `${ws.name} - ${monthNames[d.getMonth()]} ${d.getDate()}`;
     state.occurrences.push({
       id: uuid(),
-      workStreamId: wsId,
+      workStreamId: generateWsId,
       title: label,
       dueDate: dateStr,
       status: 'not-started',
@@ -3565,8 +3647,8 @@ function generateOccurrences(wsId) {
   });
 
   saveState();
-  showWorkStreamDetail(wsId);
-  alert(`Created ${datesToCreate.length} occurrence(s).`);
+  closeGenerateModal();
+  showWorkStreamDetail(generateWsId);
 }
 
 // --- Occurrence Modal ---
