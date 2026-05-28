@@ -408,18 +408,20 @@
   background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.4);
 }
 .team-toggle {
-  display:inline-flex; align-items:center; gap:0; margin-right:8px;
-  background:rgba(255,255,255,0.1); border-radius:var(--radius-sm); overflow:hidden;
+  position:absolute; top:12px; right:16px; z-index:10;
+  display:inline-flex; align-items:center; gap:0;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
+  box-shadow:0 1px 4px rgba(0,0,0,0.08);
 }
 .team-toggle button {
-  border:none; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer;
-  color:rgba(255,255,255,0.6); background:transparent; transition:all var(--transition);
+  border:none; padding:6px 16px; font-size:12px; font-weight:600; cursor:pointer;
+  color:var(--text-muted); background:transparent; transition:all var(--transition);
 }
 .team-toggle button.active {
-  background:rgba(255,255,255,0.25); color:#fff;
+  background:var(--accent); color:#fff;
 }
 .team-toggle button:hover:not(.active) {
-  color:rgba(255,255,255,0.85);
+  background:var(--accent-light); color:var(--accent);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -1417,10 +1419,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <button class="topbar-icon-btn btn-settings" id="darkModeBtn" onclick="toggleDarkMode()" data-tooltip="Toggle Dark Mode">&#127763;</button>
   <button class="topbar-icon-btn btn-settings" onclick="openSettings()" data-tooltip="Settings">&#9881;</button>
   <div class="topbar-user">
-    <div class="team-toggle" id="teamToggle">
-      <button onclick="setTeamScope('mine')" id="btnScopeMine">My Work</button>
-      <button class="active" onclick="setTeamScope('team')" id="btnScopeTeam">Team</button>
-    </div>
     <span id="currentUserLabel"></span>
     <button onclick="doLogout()">Sign Out</button>
   </div>
@@ -1471,7 +1469,13 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 
   <!-- MAIN -->
-  <div class="main">
+  <div class="main" style="position:relative;">
+
+    <!-- TEAM SCOPE TOGGLE -->
+    <div class="team-toggle" id="teamToggle">
+      <button onclick="setTeamScope('mine')" id="btnScopeMine">My Work</button>
+      <button class="active" onclick="setTeamScope('team')" id="btnScopeTeam">Team</button>
+    </div>
 
     <!-- DASHBOARD STATS BAR -->
     <div class="dash-stats" id="dashStats">
