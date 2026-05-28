@@ -3678,18 +3678,23 @@ function esc(str) {
 }
 
 // ===================== STICKY NOTE =====================
+function stickyKey(prop) {
+  const uid = currentUser?.email || 'default';
+  return `sticky_${uid}_${prop}`;
+}
+
 function toggleStickyNote() {
   const note = document.getElementById('stickyNote');
   const toggle = document.getElementById('stickyToggle');
   const isHidden = note.classList.toggle('hidden');
   toggle.style.display = isHidden ? 'flex' : 'none';
-  state.prefs.stickyOpen = !isHidden;
+  state.prefs[stickyKey('open')] = !isHidden;
   saveState();
   if (!isHidden) document.getElementById('stickyText').focus();
 }
 
 function saveStickyNote() {
-  state.prefs.stickyContent = document.getElementById('stickyText').value;
+  state.prefs[stickyKey('content')] = document.getElementById('stickyText').value;
   autoGrowSticky();
   saveState();
 }
@@ -3703,24 +3708,24 @@ function autoGrowSticky() {
 function clearStickyNote() {
   if (!confirm('Clear the sticky note?')) return;
   document.getElementById('stickyText').value = '';
-  state.prefs.stickyContent = '';
+  state.prefs[stickyKey('content')] = '';
   saveState();
 }
 
 function initStickyNote() {
   const note = document.getElementById('stickyNote');
   const toggle = document.getElementById('stickyToggle');
-  document.getElementById('stickyText').value = state.prefs.stickyContent || '';
+  document.getElementById('stickyText').value = state.prefs[stickyKey('content')] || '';
   setTimeout(autoGrowSticky, 50);
-  if (state.prefs.stickyOpen === false) {
+  if (state.prefs[stickyKey('open')] === false) {
     note.classList.add('hidden');
     toggle.style.display = 'flex';
   }
 
-  // Restore position
-  if (state.prefs.stickyPos) {
-    note.style.left = state.prefs.stickyPos.x + 'px';
-    note.style.top = state.prefs.stickyPos.y + 'px';
+  const posKey = stickyKey('pos');
+  if (state.prefs[posKey]) {
+    note.style.left = state.prefs[posKey].x + 'px';
+    note.style.top = state.prefs[posKey].y + 'px';
     note.style.right = 'auto';
     note.style.bottom = 'auto';
   }
@@ -3750,7 +3755,7 @@ function initStickyNote() {
     document.removeEventListener('mousemove', onDrag);
     document.removeEventListener('mouseup', onDragEnd);
     const rect = note.getBoundingClientRect();
-    state.prefs.stickyPos = { x: rect.left, y: rect.top };
+    state.prefs[stickyKey('pos')] = { x: rect.left, y: rect.top };
     saveState();
   }
 }
