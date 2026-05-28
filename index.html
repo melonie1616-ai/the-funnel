@@ -2674,6 +2674,7 @@ function deleteArea(areaId) {
 // ===================== WORK STREAMS =====================
 let editingWsId = null;
 let editingOccId = null;
+let isNewOccurrence = false;
 let currentWsView = null;
 
 function getCadenceLabel(ws) {
@@ -3207,13 +3208,14 @@ function addAdHocOccurrence(wsId) {
     notes: '',
     createdAt: new Date().toISOString()
   };
-  state.occurrences.push(newOcc);
-  saveState();
 
   editingOccId = newOcc.id;
+  isNewOccurrence = true;
+  state.occurrences.push(newOcc);
+
   const modal = document.getElementById('occurrenceModal');
   document.getElementById('occModalTitle').textContent = 'New Item - ' + ws.name;
-  document.getElementById('deleteOccBtn').style.display = '';
+  document.getElementById('deleteOccBtn').style.display = 'none';
   document.getElementById('occTitleInput').value = '';
   document.getElementById('occDueDateInput').value = newOcc.dueDate;
   document.getElementById('occStatusInput').value = 'not-started';
@@ -3237,6 +3239,7 @@ function addAdHocOccurrence(wsId) {
 
 function openOccurrenceModal(occId) {
   editingOccId = occId;
+  isNewOccurrence = false;
   const o = state.occurrences.find(x => x.id === occId);
   if (!o) return;
   const modal = document.getElementById('occurrenceModal');
@@ -3277,10 +3280,18 @@ function openOccurrenceModal(occId) {
 }
 
 function closeOccurrenceModal() {
+  if (isNewOccurrence && editingOccId) {
+    const o = state.occurrences.find(x => x.id === editingOccId);
+    if (o && !o.title.trim()) {
+      state.occurrences = state.occurrences.filter(x => x.id !== editingOccId);
+    }
+    saveState();
+  }
   const modal = document.getElementById('occurrenceModal');
   modal.classList.remove('open');
   modal.style.display = 'none';
   editingOccId = null;
+  isNewOccurrence = false;
   if (currentWsView) showWorkStreamDetail(currentWsView);
   else render();
 }
@@ -3737,6 +3748,11 @@ function seedWorkStreams() {
 }
 
 function bootApp() {
+  // Clean up any blank occurrences from cancelled ad-hoc creation
+  const before = state.occurrences.length;
+  state.occurrences = state.occurrences.filter(o => o.title && o.title.trim());
+  if (state.occurrences.length < before) saveState();
+
   seedWorkStreams();
   applyDarkMode();
   initStickyNote();
