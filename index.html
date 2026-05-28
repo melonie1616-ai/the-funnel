@@ -1176,7 +1176,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 <!-- TOP BAR -->
 <div class="topbar">
   <button class="topbar-btn" onclick="toggleSidebar()" title="Toggle sidebar">&#9776;</button>
-  <div class="topbar-logo">
+  <div class="topbar-logo" onclick="goHome()" style="cursor:pointer;">
     <svg viewBox="0 0 24 24" fill="none" stroke-width="1.5" style="width:28px;height:28px">
       <defs>
         <linearGradient id="funnelGrad" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -1561,9 +1561,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
           <button class="btn btn-secondary" onclick="exportData()" style="font-size:12px;">&#128229; Export Data</button>
           <button class="btn btn-secondary" onclick="document.getElementById('importFile').click()" style="font-size:12px;">&#128228; Import Data</button>
           <button class="btn btn-secondary" onclick="syncNow()" style="font-size:12px;">&#128260; Sync Now</button>
-        </div>
-        <div style="margin-top:12px;">
-          <button class="btn btn-danger" onclick="if(confirm('Delete ALL data? This cannot be undone.')){localStorage.clear();location.reload();}">Clear All Data</button>
         </div>
       </div>
     </div>
@@ -1970,27 +1967,23 @@ function render() {
 
   const container = document.getElementById('taskListContainer');
   const view = state.prefs.currentView;
-
-  // Calendar view
-  if (view === 'calendar') {
-    currentWsView = null;
-    renderCalendar();
-    return;
-  }
-
-  // If viewing a work stream, show its detail instead of task list
-  if (view.startsWith('workstream:')) {
-    const wsId = view.slice(11);
-    showWorkStreamDetail(wsId);
-    return;
-  }
-
-  // Reset view elements for task views
-  currentWsView = null;
-  document.getElementById('toolbar').style.display = '';
-
-
   const searchTerm = getSearchTerm();
+
+  // If searching, always show list view (skip calendar/workstream detail)
+  if (!searchTerm) {
+    if (view === 'calendar') {
+      currentWsView = null;
+      renderCalendar();
+      return;
+    }
+    if (view.startsWith('workstream:')) {
+      const wsId = view.slice(11);
+      showWorkStreamDetail(wsId);
+      return;
+    }
+  }
+
+  currentWsView = null;
   document.getElementById('toolbar').style.display = '';
 
   let tasks = getFilteredTasks();
@@ -3888,6 +3881,27 @@ function bootApp() {
     document.getElementById('sidebar').classList.add('collapsed');
   }
   document.getElementById('currentUserLabel').textContent = currentUser.email.split('@')[0];
+
+  // Default to calendar view and collapse all sidebar areas on load
+  state.prefs.currentView = 'calendar';
+  state.prefs.collapsedAreas = {};
+  state.areas.forEach(a => { state.prefs.collapsedAreas[a.id] = true; });
+  state.prefs.collapsedAreas['_unassigned'] = true;
+  state.prefs.collapsedGroups = {};
+
+  render();
+}
+
+function goHome() {
+  state.prefs.currentView = 'calendar';
+  state.prefs.filters = [];
+  viewAreaFilter = '';
+  state.prefs.collapsedAreas = {};
+  state.areas.forEach(a => { state.prefs.collapsedAreas[a.id] = true; });
+  state.prefs.collapsedAreas['_unassigned'] = true;
+  state.prefs.collapsedGroups = {};
+  document.getElementById('searchInput').value = '';
+  saveState();
   render();
 }
 
