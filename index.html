@@ -407,6 +407,20 @@
 .topbar-user button:hover {
   background:rgba(255,255,255,0.1); color:#fff; border-color:rgba(255,255,255,0.4);
 }
+.team-toggle {
+  display:inline-flex; align-items:center; gap:0; margin-right:8px;
+  background:rgba(255,255,255,0.1); border-radius:var(--radius-sm); overflow:hidden;
+}
+.team-toggle button {
+  border:none; padding:4px 12px; font-size:11px; font-weight:600; cursor:pointer;
+  color:rgba(255,255,255,0.6); background:transparent; transition:all var(--transition);
+}
+.team-toggle button.active {
+  background:rgba(255,255,255,0.25); color:#fff;
+}
+.team-toggle button:hover:not(.active) {
+  color:rgba(255,255,255,0.85);
+}
 
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -1403,6 +1417,10 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <button class="topbar-icon-btn btn-settings" id="darkModeBtn" onclick="toggleDarkMode()" data-tooltip="Toggle Dark Mode">&#127763;</button>
   <button class="topbar-icon-btn btn-settings" onclick="openSettings()" data-tooltip="Settings">&#9881;</button>
   <div class="topbar-user">
+    <div class="team-toggle" id="teamToggle">
+      <button onclick="setTeamScope('mine')" id="btnScopeMine">My Work</button>
+      <button class="active" onclick="setTeamScope('team')" id="btnScopeTeam">Team</button>
+    </div>
     <span id="currentUserLabel"></span>
     <button onclick="doLogout()">Sign Out</button>
   </div>
@@ -2053,6 +2071,7 @@ let firebaseApp, firebaseAuth, firebaseDb;
 let currentUser = null;
 let saveDebounceTimer = null;
 const SAVE_DEBOUNCE_MS = 1500;
+let teamScope = 'team'; // 'mine' or 'team'
 
 function initFirebase() {
   firebaseApp = firebase.initializeApp(firebaseConfig);
@@ -2303,7 +2322,7 @@ function getSearchTerm() {
 }
 
 function getFilteredTasks() {
-  let tasks = [...state.tasks];
+  let tasks = state.tasks.filter(t => isMyTask(t));
   const view = state.prefs.currentView;
   const searchTerm = getSearchTerm();
 
@@ -2563,9 +2582,9 @@ function renderInbox(container) {
 
 // ===================== COUNTS =====================
 function updateCounts() {
-  const active = state.tasks.filter(t => !t.completed);
+  const active = state.tasks.filter(t => !t.completed && isMyTask(t));
   const today = todayStr();
-  const pendingOccs = state.occurrences.filter(o => o.status !== 'done');
+  const pendingOccs = state.occurrences.filter(o => o.status !== 'done' && isMyOccurrence(o));
 
   // Combined counts: tasks + occurrences
   const todayTasks = active.filter(t => isToday(t.dueDate)).length;
@@ -2582,7 +2601,7 @@ function updateCounts() {
 
   const waitingCount = active.filter(t => t.waitingOn).length;
   const inboxCount = state.inbox.length;
-  const activeWsCount = state.workStreams.filter(ws => ws.status === 'active').length;
+  const activeWsCount = state.workStreams.filter(ws => ws.status === 'active' && isMyWorkStream(ws)).length;
 
   document.getElementById('countAll').textContent = active.length;
   document.getElementById('countToday').textContent = todayCount;
@@ -2592,7 +2611,7 @@ function updateCounts() {
   document.getElementById('countWeek').textContent = weekCount;
   document.getElementById('countOverdue').textContent = overdueCount;
   document.getElementById('countWaiting').textContent = waitingCount;
-  document.getElementById('countCompleted').textContent = state.tasks.filter(t => t.completed).length;
+  document.getElementById('countCompleted').textContent = state.tasks.filter(t => t.completed && isMyTask(t)).length;
   const inboxEl = document.getElementById('inboxCount');
   inboxEl.textContent = inboxCount;
   inboxEl.classList.toggle('has-items', inboxCount > 0);
@@ -3060,7 +3079,7 @@ function getCalEvents(dateStr) {
   const items = [];
   // Occurrences
   state.occurrences.forEach(o => {
-    if (o.dueDate === dateStr && (calShowDone || o.status !== 'done')) {
+    if (o.dueDate === dateStr && (calShowDone || o.status !== 'done') && isMyOccurrence(o)) {
       const ws = state.workStreams.find(w => w.id === o.workStreamId);
       const area = ws ? getAreaById(ws.areaId) : null;
       if (calFilterAreas && area && !calFilterAreas.has(area.id)) return;
@@ -3069,7 +3088,7 @@ function getCalEvents(dateStr) {
   });
   // Tasks with due dates
   state.tasks.forEach(t => {
-    if (t.dueDate === dateStr && (calShowDone || !t.completed)) {
+    if (t.dueDate === dateStr && (calShowDone || !t.completed) && isMyTask(t)) {
       if (calFilterAreas) return;
       items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:t.completed?'done':'task', areaName:'', wsName:'' });
     }
@@ -3270,6 +3289,34 @@ function toggleCalShowDone() {
   renderCalendar();
 }
 
+// ===================== TEAM SCOPE =====================
+function setTeamScope(scope) {
+  teamScope = scope;
+  document.getElementById('btnScopeMine').classList.toggle('active', scope === 'mine');
+  document.getElementById('btnScopeTeam').classList.toggle('active', scope === 'team');
+  render();
+}
+
+function isMyWorkStream(ws) {
+  if (teamScope === 'team') return true;
+  return ws.owner === 'me' || ws.owner === 'shared';
+}
+
+function isMyOccurrence(occ) {
+  if (teamScope === 'team') return true;
+  const ws = state.workStreams.find(w => w.id === occ.workStreamId);
+  if (!ws) return true;
+  if (occ.assignee) {
+    return occ.assignee === (currentUser?.email || '');
+  }
+  return ws.owner === 'me' || ws.owner === 'shared';
+}
+
+function isMyTask(t) {
+  if (teamScope === 'team') return true;
+  return true; // legacy tasks are always "mine"
+}
+
 // Day detail panel
 function openCalDayDetail(dateStr) {
   const panel = document.getElementById('calDayDetail');
@@ -3434,7 +3481,7 @@ function getOccurrencesForWs(wsId) {
 }
 
 function getActiveOccCount(wsId) {
-  return state.occurrences.filter(o => o.workStreamId === wsId && o.status !== 'done').length;
+  return state.occurrences.filter(o => o.workStreamId === wsId && o.status !== 'done' && isMyOccurrence(o)).length;
 }
 
 // --- Sidebar rendering ---
@@ -3443,7 +3490,7 @@ function updateAreaWorkStreamList() {
   if (!container) return;
   let html = '';
   state.areas.forEach(area => {
-    const wsList = getWorkStreamsByArea(area.id);
+    const wsList = getWorkStreamsByArea(area.id).filter(ws => isMyWorkStream(ws));
     const isExpanded = !state.prefs.collapsedAreas[area.id];
     const totalActive = wsList.reduce((sum, ws) => sum + getActiveOccCount(ws.id), 0);
     html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')">
@@ -3933,7 +3980,12 @@ function openOccurrenceModal(occId) {
 
   const assignSel = document.getElementById('occAssigneeInput');
   assignSel.innerHTML = '<option value="">Unassigned</option>';
-  if (currentUser) assignSel.innerHTML += `<option value="${esc(currentUser.email)}">${esc(currentUser.email.split('@')[0])}</option>`;
+  const knownEmails = new Set();
+  if (currentUser?.email) knownEmails.add(currentUser.email);
+  state.occurrences.forEach(oc => { if (oc.assignee) knownEmails.add(oc.assignee); });
+  [...knownEmails].sort().forEach(email => {
+    assignSel.innerHTML += `<option value="${esc(email)}">${esc(email.split('@')[0])}</option>`;
+  });
   assignSel.value = o.assignee || '';
 
   document.getElementById('occNotesInput').value = o.notes || '';
