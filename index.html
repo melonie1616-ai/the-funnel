@@ -2929,6 +2929,7 @@ function showWorkStreamDetail(wsId) {
       </div>
       <div class="ws-actions">
         <button onclick="openWorkStreamModal('${wsId}')">Edit</button>
+        <button onclick="addAdHocOccurrence('${wsId}')">+ Add Item</button>
         <button class="primary" onclick="generateOccurrences('${wsId}')">Generate Next</button>
       </div>
     </div>
@@ -3186,6 +3187,48 @@ function confirmGenerate() {
 }
 
 // --- Occurrence Modal ---
+function addAdHocOccurrence(wsId) {
+  const ws = state.workStreams.find(w => w.id === wsId);
+  if (!ws) return;
+  const newOcc = {
+    id: uuid(),
+    workStreamId: wsId,
+    title: '',
+    dueDate: todayStr(),
+    status: 'not-started',
+    priority: 'none',
+    assignee: '',
+    checklist: [],
+    notes: '',
+    createdAt: new Date().toISOString()
+  };
+  state.occurrences.push(newOcc);
+  saveState();
+
+  editingOccId = newOcc.id;
+  const modal = document.getElementById('occurrenceModal');
+  document.getElementById('occModalTitle').textContent = 'New Item - ' + ws.name;
+  document.getElementById('deleteOccBtn').style.display = '';
+  document.getElementById('occTitleInput').value = '';
+  document.getElementById('occDueDateInput').value = newOcc.dueDate;
+  document.getElementById('occStatusInput').value = 'not-started';
+  document.getElementById('occPriorityInput').value = 'none';
+
+  const assignSel = document.getElementById('occAssigneeInput');
+  assignSel.innerHTML = '<option value="">Unassigned</option>';
+  const knownEmails = new Set();
+  if (currentUser?.email) knownEmails.add(currentUser.email);
+  state.occurrences.forEach(oc => { if (oc.assignee) knownEmails.add(oc.assignee); });
+  [...knownEmails].sort().forEach(email => {
+    assignSel.innerHTML += `<option value="${esc(email)}">${esc(email.split('@')[0])}</option>`;
+  });
+  assignSel.value = '';
+  document.getElementById('occNotesInput').value = '';
+  document.getElementById('occChecklistItems').innerHTML = '';
+  modal.style.display = 'flex';
+  document.getElementById('occTitleInput').focus();
+}
+
 function openOccurrenceModal(occId) {
   editingOccId = occId;
   const o = state.occurrences.find(x => x.id === occId);
