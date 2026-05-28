@@ -1301,7 +1301,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   .task-card { padding:12px 12px; gap:10px; }
   .task-title { font-size:13px; }
   .task-meta { gap:4px; }
-  .priority-badge, .cat-badge, .waiting-badge { font-size:9px; padding:1px 6px; }
+  .priority-badge, .waiting-badge { font-size:9px; padding:1px 6px; }
   .date-badge { font-size:10px; }
 
   /* Focus button hidden on mobile (too small) */
@@ -1454,13 +1454,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div id="areaWorkStreamList"></div>
     </div>
 
-    <div class="sidebar-section">
-      <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
-        Categories
-        <button class="sidebar-add-btn" onclick="openCategoryModal()" style="padding:0;width:auto;font-size:16px;line-height:1;" title="Manage categories">&#9881;</button>
-      </div>
-      <div id="categoryList"></div>
-    </div>
   </div>
 
   <!-- MAIN -->
@@ -1475,19 +1468,19 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="dash-cards">
         <div class="dash-card dash-card-today" onclick="switchView('today')">
           <div class="dash-card-num" id="dashToday">0</div>
-          <div class="dash-card-label">Today</div>
+          <div class="dash-card-label">Due Today</div>
         </div>
         <div class="dash-card dash-card-overdue" onclick="switchView('overdue')">
           <div class="dash-card-num" id="dashOverdue">0</div>
           <div class="dash-card-label">Overdue</div>
         </div>
-        <div class="dash-card dash-card-week" onclick="switchView('week')">
+        <div class="dash-card dash-card-week" onclick="switchView('calendar')">
           <div class="dash-card-num" id="dashWeek">0</div>
           <div class="dash-card-label">This Week</div>
         </div>
-        <div class="dash-card dash-card-waiting" onclick="switchView('waiting')">
-          <div class="dash-card-num" id="dashWaiting">0</div>
-          <div class="dash-card-label">Waiting On</div>
+        <div class="dash-card dash-card-waiting" style="background:var(--success-light);border-color:rgba(16,185,129,0.2);">
+          <div class="dash-card-num" id="dashActiveWs">0</div>
+          <div class="dash-card-label">Active Streams</div>
         </div>
         <div class="dash-card dash-card-inbox" onclick="switchView('inbox')">
           <div class="dash-card-num" id="dashInbox">0</div>
@@ -1503,7 +1496,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         <select id="groupBy" onchange="onGroupByChange()">
           <option value="none">None</option>
           <option value="date" selected>Date</option>
-          <option value="category">Category</option>
           <option value="priority">Priority</option>
         </select>
       </div>
@@ -1512,7 +1504,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
         <select id="sortBy" onchange="onSortChange()">
           <option value="dueDate">Due Date</option>
           <option value="priority">Priority</option>
-          <option value="category">Category</option>
           <option value="createdAt">Date Created</option>
           <option value="title">Alphabetical</option>
         </select>
@@ -1528,7 +1519,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
             <option value="priority:medium">2-Medium</option>
             <option value="priority:low">3-Low</option>
           </optgroup>
-          <optgroup label="Category" id="filterCategoryOpts"></optgroup>
           <optgroup label="Date">
             <option value="date:overdue">Overdue</option>
             <option value="date:today">Today</option>
@@ -1598,11 +1588,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
             <option value="low">3-Low</option>
           </select>
         </div>
-        <div class="form-group">
-          <label>Category</label>
-          <input type="text" id="taskCategoryInput" list="categoryDatalist" placeholder="e.g. VMO">
-          <datalist id="categoryDatalist"></datalist>
-        </div>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1671,25 +1656,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   </div>
 </div>
 
-<!-- CATEGORY MANAGEMENT MODAL -->
-<div class="modal-overlay" id="categoryModal">
-  <div class="modal" style="width:480px">
-    <div class="modal-header">
-      <h2>Manage Categories</h2>
-      <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <div style="display:flex;gap:8px;margin-bottom:16px;">
-        <input type="text" id="newCategoryInput" placeholder="New category name..." onkeydown="if(event.key==='Enter')addCategory()" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;">
-        <button class="btn btn-primary" onclick="addCategory()">Add</button>
-      </div>
-      <div id="categoryManageList"></div>
-    </div>
-    <div class="modal-footer">
-      <button class="btn btn-secondary" onclick="closeCategoryModal()">Done</button>
-    </div>
-  </div>
-</div>
 
 <!-- AREA MANAGEMENT MODAL -->
 <div class="modal-overlay" id="areaModal">
@@ -1893,12 +1859,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="form-group">
         <label>Paste your meeting notes, transcript, or bullet points</label>
         <textarea class="meeting-notes-textarea" id="meetingNotesText" placeholder="Paste meeting notes here..."></textarea>
-      </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>Default Category</label>
-          <input type="text" id="meetingDefaultCategory" list="categoryDatalist" placeholder="Optional">
-        </div>
       </div>
       <div style="display:flex;gap:8px;margin-bottom:16px;">
         <button class="btn btn-primary" onclick="extractTasks()">Extract Tasks</button>
@@ -2157,8 +2117,6 @@ function showLogin() {
 }
 
 // ===================== STATE =====================
-const INITIAL_CATEGORIES = ['VMO','CDO Core','SW','Data team','Communications','MDM','Onboarding','ADR/CTO','My Stuff'];
-
 const DEFAULT_AREAS = [
   { id: 'superworker', name: 'Superworker', color: '#8b5cf6' },
   { id: 'builders', name: 'Builders', color: '#6366f1' },
@@ -2176,8 +2134,6 @@ const DEFAULT_STATE = {
   areas: [],
   workStreams: [],
   occurrences: [],
-  customCategories: [],
-  removedCategories: [],
   settings: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     apiKey: '',
@@ -2215,8 +2171,6 @@ async function loadState() {
       state.areas = data.areas || [];
       state.workStreams = data.workStreams || [];
       state.occurrences = data.occurrences || [];
-      state.customCategories = data.customCategories || [];
-      state.removedCategories = data.removedCategories || [];
       state.settings = { ...state.settings, ...(data.settings || {}) };
       state.prefs = { ...state.prefs, ...(data.prefs || {}) };
     }
@@ -2246,8 +2200,6 @@ async function _saveToFirestore() {
       areas: state.areas,
       workStreams: state.workStreams,
       occurrences: state.occurrences,
-      customCategories: state.customCategories,
-      removedCategories: state.removedCategories,
       settings: state.settings,
       prefs: state.prefs,
       lastUpdatedBy: currentUser.email,
@@ -2268,8 +2220,6 @@ function listenForChanges() {
           state.areas = data.areas || [];
           state.workStreams = data.workStreams || [];
           state.occurrences = data.occurrences || [];
-          state.customCategories = data.customCategories || [];
-          state.removedCategories = data.removedCategories || [];
           state.settings = { ...state.settings, ...(data.settings || {}) };
           render();
         }
@@ -2297,8 +2247,6 @@ async function checkAndMigrate() {
       if (doMigrate) {
         state.tasks = parsed.tasks || [];
         state.inbox = parsed.inbox || [];
-        state.customCategories = parsed.customCategories || [];
-        state.removedCategories = parsed.removedCategories || [];
         state.settings = { ...state.settings, ...(parsed.settings || {}) };
         state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
         await _saveToFirestore();
@@ -2353,16 +2301,6 @@ function formatDate(d) {
   return dt.toLocaleDateString(undefined, opts);
 }
 
-// ===================== CATEGORIES =====================
-function getAllCategories() {
-  const cats = new Set();
-  const removed = new Set(state.removedCategories || []);
-  INITIAL_CATEGORIES.forEach(c => { if (!removed.has(c)) cats.add(c); });
-  if (state.customCategories) state.customCategories.forEach(c => cats.add(c));
-  state.tasks.forEach(t => { if (t.category) cats.add(t.category); });
-  return [...cats].sort();
-}
-
 // ===================== FILTERING =====================
 function getSearchTerm() {
   return (document.getElementById('searchInput')?.value || '').toLowerCase().trim();
@@ -2379,14 +2317,12 @@ function getFilteredTasks() {
     tasks = tasks.filter(t => !t.completed);
     tasks = tasks.filter(t =>
       t.title.toLowerCase().includes(searchTerm) ||
-      (t.notes || '').toLowerCase().includes(searchTerm) ||
-      (t.category || '').toLowerCase().includes(searchTerm)
+      (t.notes || '').toLowerCase().includes(searchTerm)
     );
     // Still apply filter chips on top of search
     state.prefs.filters.forEach(f => {
       const [type, val] = f.split(':');
       if (type === 'priority') tasks = tasks.filter(t => t.priority === val);
-      else if (type === 'category') tasks = tasks.filter(t => t.category === val);
       else if (type === 'date') {
         if (val === 'overdue') tasks = tasks.filter(t => isOverdue(t.dueDate));
         else if (val === 'today') tasks = tasks.filter(t => isToday(t.dueDate));
@@ -2412,16 +2348,12 @@ function getFilteredTasks() {
     tasks = tasks.filter(t => t.completed);
   } else if (view === 'all') {
     tasks = tasks.filter(t => !t.completed);
-  } else if (view.startsWith('category:')) {
-    const cat = view.slice(9);
-    tasks = tasks.filter(t => t.category === cat && !t.completed);
   }
 
   // Filter chips
   state.prefs.filters.forEach(f => {
     const [type, val] = f.split(':');
     if (type === 'priority') tasks = tasks.filter(t => t.priority === val);
-    else if (type === 'category') tasks = tasks.filter(t => t.category === val);
     else if (type === 'date') {
       if (val === 'overdue') tasks = tasks.filter(t => isOverdue(t.dueDate));
       else if (val === 'today') tasks = tasks.filter(t => isToday(t.dueDate));
@@ -2448,8 +2380,6 @@ function sortTasks(tasks) {
       cmp = da.localeCompare(db);
     } else if (sortBy === 'priority') {
       cmp = (PRIORITY_ORDER[a.priority]||3) - (PRIORITY_ORDER[b.priority]||3);
-    } else if (sortBy === 'category') {
-      cmp = (a.category||'').localeCompare(b.category||'');
     } else if (sortBy === 'createdAt') {
       cmp = (a.createdAt||'').localeCompare(b.createdAt||'');
     } else if (sortBy === 'title') {
@@ -2473,8 +2403,6 @@ function groupTasks(tasks) {
       else if (isToday(t.dueDate)) key = 'Today';
       else if (isWithinWeek(t.dueDate)) key = 'This Week';
       else key = 'Later';
-    } else if (groupBy === 'category') {
-      key = t.category || 'Uncategorized';
     } else if (groupBy === 'priority') {
       key = PRIORITY_LABELS[t.priority || 'none'];
     }
@@ -2602,7 +2530,6 @@ function renderTaskCard(t) {
       <div class="task-title">${esc(t.title)}</div>
       <div class="task-meta">
         <span class="priority-badge ${t.priority || 'none'}">${PRIORITY_LABELS[t.priority||'none']}</span>
-        ${t.category ? `<span class="cat-badge">${esc(t.category)}</span>` : ''}
         ${t.dueDate ? `<span class="date-badge ${overdue ? 'overdue' : ''} ${today ? 'today' : ''}">${formatDate(t.dueDate)}</span>` : ''}
         ${subtaskTotal > 0 ? `<span class="subtask-progress">&#9745; ${subtaskDone}/${subtaskTotal}</span>` : ''}
         ${t.recurrence ? `<span class="recurring-icon" title="Recurring: ${t.recurrence.startsWith('every:') ? 'every '+t.recurrence.split(':')[1]+' days' : t.recurrence}">&#128260;</span>` : ''}
@@ -2641,15 +2568,31 @@ function renderInbox(container) {
 // ===================== COUNTS =====================
 function updateCounts() {
   const active = state.tasks.filter(t => !t.completed);
-  const todayCount = active.filter(t => isToday(t.dueDate)).length;
-  const overdueCount = active.filter(t => isOverdue(t.dueDate)).length;
-  const weekCount = active.filter(t => isWithinWeek(t.dueDate)).length;
+  const today = todayStr();
+  const pendingOccs = state.occurrences.filter(o => o.status !== 'done');
+
+  // Combined counts: tasks + occurrences
+  const todayTasks = active.filter(t => isToday(t.dueDate)).length;
+  const todayOccs = pendingOccs.filter(o => o.dueDate === today).length;
+  const todayCount = todayTasks + todayOccs;
+
+  const overdueTasks = active.filter(t => isOverdue(t.dueDate)).length;
+  const overdueOccs = pendingOccs.filter(o => o.dueDate && o.dueDate < today).length;
+  const overdueCount = overdueTasks + overdueOccs;
+
+  const weekTasks = active.filter(t => isWithinWeek(t.dueDate)).length;
+  const weekOccs = pendingOccs.filter(o => isWithinWeek(o.dueDate)).length;
+  const weekCount = weekTasks + weekOccs;
+
   const waitingCount = active.filter(t => t.waitingOn).length;
   const inboxCount = state.inbox.length;
+  const activeWsCount = state.workStreams.filter(ws => ws.status === 'active').length;
 
   document.getElementById('countAll').textContent = active.length;
   document.getElementById('countToday').textContent = todayCount;
-  document.getElementById('countTomorrow').textContent = active.filter(t => isTomorrow(t.dueDate)).length;
+  document.getElementById('countTomorrow').textContent =
+    active.filter(t => isTomorrow(t.dueDate)).length +
+    pendingOccs.filter(o => isTomorrow(o.dueDate)).length;
   document.getElementById('countWeek').textContent = weekCount;
   document.getElementById('countOverdue').textContent = overdueCount;
   document.getElementById('countWaiting').textContent = waitingCount;
@@ -2662,7 +2605,7 @@ function updateCounts() {
   document.getElementById('dashToday').textContent = todayCount;
   document.getElementById('dashOverdue').textContent = overdueCount;
   document.getElementById('dashWeek').textContent = weekCount;
-  document.getElementById('dashWaiting').textContent = waitingCount;
+  document.getElementById('dashActiveWs').textContent = activeWsCount;
   document.getElementById('dashInbox').textContent = inboxCount;
 
   // Greeting
@@ -2678,17 +2621,6 @@ function updateCounts() {
 
 // ===================== SIDEBAR =====================
 function updateSidebar() {
-  // Categories
-  const cl = document.getElementById('categoryList');
-  const cats = getAllCategories();
-  cl.innerHTML = cats.map(c => {
-    const count = state.tasks.filter(t => t.category === c && !t.completed).length;
-    const isActive = state.prefs.currentView === 'category:' + c;
-    return `<div class="sidebar-item ${isActive?'active':''}" onclick="switchView('category:${c}')">
-      ${esc(c)} <span class="count">${count}</span>
-    </div>`;
-  }).join('');
-
   // Active view highlight
   document.querySelectorAll('.sidebar-item[data-view]').forEach(el => {
     el.classList.toggle('active', el.dataset.view === state.prefs.currentView);
@@ -2701,10 +2633,6 @@ function updateToolbar() {
   document.getElementById('sortDirBtn').innerHTML = state.prefs.sortDir === 'asc' ? '&#9650;' : '&#9660;';
   document.getElementById('viewCard').classList.toggle('active', state.prefs.viewMode === 'card');
   document.getElementById('viewCompact').classList.toggle('active', state.prefs.viewMode === 'compact');
-
-  // Update filter category options
-  const catOpts = document.getElementById('filterCategoryOpts');
-  catOpts.innerHTML = getAllCategories().map(c => `<option value="category:${esc(c)}">${esc(c)}</option>`).join('');
 }
 
 function updateFilterChips() {
@@ -3208,6 +3136,7 @@ function deleteCategory(name) {
 let calYear, calMonth, calViewMode = 'month';
 let calFilterAreas = null; // null = show all
 let calWeekStart = null;
+let calShowDone = false;
 
 function initCalDate() {
   const now = new Date();
@@ -3227,7 +3156,7 @@ function getCalEvents(dateStr) {
   const items = [];
   // Occurrences
   state.occurrences.forEach(o => {
-    if (o.dueDate === dateStr && o.status !== 'done') {
+    if (o.dueDate === dateStr && (calShowDone || o.status !== 'done')) {
       const ws = state.workStreams.find(w => w.id === o.workStreamId);
       const area = ws ? getAreaById(ws.areaId) : null;
       if (calFilterAreas && area && !calFilterAreas.has(area.id)) return;
@@ -3236,9 +3165,9 @@ function getCalEvents(dateStr) {
   });
   // Tasks with due dates
   state.tasks.forEach(t => {
-    if (t.dueDate === dateStr && !t.completed) {
-      if (calFilterAreas) return; // hide tasks when filtering by area
-      items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:'task', areaName:t.category || '', wsName:'' });
+    if (t.dueDate === dateStr && (calShowDone || !t.completed)) {
+      if (calFilterAreas) return;
+      items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:t.completed?'done':'task', areaName:t.category || '', wsName:'' });
     }
   });
   return items;
@@ -3259,6 +3188,7 @@ function renderCalendar() {
     filterHtml += `<span class="cal-filter-chip ${isOn && calFilterAreas ? 'on' : (!calFilterAreas ? 'on' : '')}" style="color:${a.color};background:${a.color}15;" onclick="toggleCalFilter('${a.id}')">`
       + `<span class="area-dot" style="background:${a.color}"></span>${esc(a.name)}</span>`;
   });
+  filterHtml += `<span class="cal-filter-chip ${calShowDone ? 'on' : ''}" style="color:var(--success);background:var(--success-light);margin-left:auto;" onclick="toggleCalShowDone()">&#10003; Show Completed</span>`;
   filterHtml += '</div>';
 
   if (calViewMode === 'month') {
@@ -3327,7 +3257,7 @@ function renderCalDayCell(dateStr, day, isOther, today) {
   html += `<div class="cal-date">${day}</div>`;
   const maxShow = 3;
   events.slice(0, maxShow).forEach(ev => {
-    html += `<div class="cal-event${ev.type==='task'?' task-event':''}" style="${ev.type!=='task'?'background:'+ev.color:''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')" title="${esc(ev.title)}">${esc(ev.title)}</div>`;
+    html += `<div class="cal-event${ev.type==='task'?' task-event':''}" style="${ev.type!=='task'?'background:'+ev.color:''}${ev.status==='done'?';opacity:0.4;text-decoration:line-through':''}" onclick="event.stopPropagation();calEventClick('${ev.type}','${ev.id}')" title="${esc(ev.title)}">${ev.status==='done'?'&#10003; ':''}${esc(ev.title)}</div>`;
   });
   if (events.length > maxShow) {
     html += `<div class="cal-more">+${events.length - maxShow} more</div>`;
@@ -3428,6 +3358,10 @@ function toggleCalFilter(areaId) {
   } else {
     calFilterAreas.add(areaId);
   }
+  renderCalendar();
+}
+function toggleCalShowDone() {
+  calShowDone = !calShowDone;
   renderCalendar();
 }
 
@@ -5475,8 +5409,6 @@ function startLocalMode() {
       state.areas = parsed.areas || JSON.parse(JSON.stringify(DEFAULT_AREAS));
       state.workStreams = parsed.workStreams || [];
       state.occurrences = parsed.occurrences || [];
-      state.customCategories = parsed.customCategories || [];
-      state.removedCategories = parsed.removedCategories || [];
       state.settings = { ...state.settings, ...(parsed.settings || {}) };
       state.prefs = { ...state.prefs, ...(parsed.prefs || {}) };
     }
