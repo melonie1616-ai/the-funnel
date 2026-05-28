@@ -1827,7 +1827,7 @@ function getFilteredTasks() {
   } else if (view === 'waiting') {
     tasks = tasks.filter(t => !t.completed && t.waitingOn);
   } else if (view === 'completed') {
-    tasks = tasks.filter(t => t.completed);
+    tasks = [];
   } else if (view === 'all') {
     tasks = tasks.filter(t => !t.completed);
   }
@@ -2124,7 +2124,7 @@ function updateCounts() {
   if (weekEl) weekEl.textContent = weekCount;
   document.getElementById('countOverdue').textContent = overdueCount;
   document.getElementById('countWaiting').textContent = waitingCount;
-  document.getElementById('countCompleted').textContent = completedTasks + completedOccs;
+  document.getElementById('countCompleted').textContent = completedOccs;
 
 }
 
