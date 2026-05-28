@@ -76,7 +76,7 @@
   --shadow-lg: 0 10px 25px rgba(0,0,0,0.5);
 }
 /* ===================== CALENDAR ===================== */
-.cal-container { padding:16px 20px; max-width:1100px; }
+.cal-container { padding:16px 20px; max-width:1400px; }
 .cal-header {
   display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px;
 }
@@ -110,7 +110,7 @@
   font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.5px;
 }
 .cal-day {
-  background:var(--bg-card); min-height:90px; padding:4px 5px;
+  background:var(--bg-card); min-height:120px; padding:4px 5px;
   cursor:pointer; transition:background 0.15s; position:relative;
 }
 .cal-day:hover { background:var(--accent-light); }
@@ -804,10 +804,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .priority-badge.medium { background:var(--priority-medium); }
 .priority-badge.low { background:var(--priority-low); }
 .priority-badge.none { background:var(--priority-none); }
-.cat-badge {
-  padding:2px 8px; border-radius:12px; font-size:10px;
-  background:var(--accent-light); color:var(--accent); font-weight:600;
-}
 .date-badge { color:var(--text-muted); font-size:11px; font-weight:500; }
 .date-badge.overdue { color:var(--danger); font-weight:700; }
 .date-badge.today { color:var(--accent); font-weight:700; }
@@ -2641,7 +2637,6 @@ function updateFilterChips() {
     let label = f;
     const [type, val] = f.split(':');
     if (type === 'priority') label = 'Priority: ' + (PRIORITY_LABELS[val] || val);
-    else if (type === 'category') label = 'Category: ' + val;
     else if (type === 'date') {
       const names = { overdue:'Overdue', today:'Today', week:'Next 7 Days', nodate:'No Date' };
       label = names[val] || val;
@@ -2730,10 +2725,6 @@ function openTaskModal(taskId) {
   const title = document.getElementById('taskModalTitle');
   const delBtn = document.getElementById('deleteTaskBtn');
 
-  // Populate category datalist
-  const dl = document.getElementById('categoryDatalist');
-  dl.innerHTML = getAllCategories().map(c => `<option value="${esc(c)}">`).join('');
-
   if (editingTaskId) {
     const t = state.tasks.find(t => t.id === editingTaskId);
     if (!t) return;
@@ -2742,7 +2733,6 @@ function openTaskModal(taskId) {
     document.getElementById('taskTitleInput').value = t.title;
     document.getElementById('taskNotesInput').value = t.notes || '';
     document.getElementById('taskPriorityInput').value = t.priority || 'none';
-    document.getElementById('taskCategoryInput').value = t.category || '';
     document.getElementById('taskDueDateInput').value = t.dueDate || '';
     setRecurrenceUI(t.recurrence);
     document.getElementById('taskWaitingOnInput').value = t.waitingOn || '';
@@ -2753,7 +2743,6 @@ function openTaskModal(taskId) {
     document.getElementById('taskTitleInput').value = '';
     document.getElementById('taskNotesInput').value = '';
     document.getElementById('taskPriorityInput').value = 'none';
-    document.getElementById('taskCategoryInput').value = '';
     document.getElementById('taskDueDateInput').value = '';
     setRecurrenceUI(null);
     document.getElementById('taskWaitingOnInput').value = '';
@@ -2824,7 +2813,6 @@ function saveTask() {
     title,
     notes: document.getElementById('taskNotesInput').value,
     priority: document.getElementById('taskPriorityInput').value,
-    category: document.getElementById('taskCategoryInput').value.trim(),
     dueDate: document.getElementById('taskDueDateInput').value || null,
     recurrence: getRecurrenceValue(),
     waitingOn: document.getElementById('taskWaitingOnInput').value.trim() || null,
@@ -3047,90 +3035,6 @@ function deleteInboxItem(id) {
 }
 
 // ===================== PROJECTS =====================
-// ===================== CATEGORY MANAGEMENT =====================
-function openCategoryModal() {
-  document.getElementById('newCategoryInput').value = '';
-  renderCategoryManageList();
-  document.getElementById('categoryModal').classList.add('open');
-  setTimeout(() => document.getElementById('newCategoryInput').focus(), 100);
-}
-
-function closeCategoryModal() {
-  document.getElementById('categoryModal').classList.remove('open');
-  render();
-}
-
-function renderCategoryManageList() {
-  const cats = getAllCategories();
-  const list = document.getElementById('categoryManageList');
-  if (cats.length === 0) {
-    list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No categories yet.</p>';
-    return;
-  }
-  list.innerHTML = cats.map(c => {
-    const taskCount = state.tasks.filter(t => t.category === c).length;
-    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px;">
-      <span style="flex:1;font-size:13px;font-weight:500;">${esc(c)}</span>
-      <span style="font-size:11px;color:var(--text-muted);">${taskCount} task${taskCount!==1?'s':''}</span>
-      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="renameCategory('${esc(c).replace(/'/g,"\\'")}')">Rename</button>
-      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;color:var(--danger);" onclick="deleteCategory('${esc(c).replace(/'/g,"\\'")}')">Delete</button>
-    </div>`;
-  }).join('');
-}
-
-function addCategory() {
-  const input = document.getElementById('newCategoryInput');
-  const name = input.value.trim();
-  if (!name) return;
-  if (getAllCategories().includes(name)) { alert('Category already exists.'); return; }
-  if (!state.customCategories) state.customCategories = [];
-  state.customCategories.push(name);
-  saveState();
-  input.value = '';
-  renderCategoryManageList();
-  render();
-}
-
-function renameCategory(oldName) {
-  const newName = prompt('Rename "' + oldName + '" to:', oldName);
-  if (!newName || newName.trim() === '' || newName.trim() === oldName) return;
-  const trimmed = newName.trim();
-  state.tasks.forEach(t => { if (t.category === oldName) t.category = trimmed; });
-  if (INITIAL_CATEGORIES.includes(oldName)) {
-    if (!state.removedCategories) state.removedCategories = [];
-    state.removedCategories.push(oldName);
-    if (!state.customCategories) state.customCategories = [];
-    state.customCategories.push(trimmed);
-  }
-  if (state.customCategories) {
-    const idx = state.customCategories.indexOf(oldName);
-    if (idx >= 0) state.customCategories[idx] = trimmed;
-  }
-  if (state.prefs.currentView === 'category:' + oldName) state.prefs.currentView = 'category:' + trimmed;
-  saveState();
-  renderCategoryManageList();
-  render();
-}
-
-function deleteCategory(name) {
-  const taskCount = state.tasks.filter(t => t.category === name).length;
-  const msg = taskCount > 0
-    ? `Delete "${name}"? ${taskCount} task(s) will have their category cleared.`
-    : `Delete "${name}"?`;
-  if (!confirm(msg)) return;
-  state.tasks.forEach(t => { if (t.category === name) t.category = ''; });
-  if (INITIAL_CATEGORIES.includes(name)) {
-    if (!state.removedCategories) state.removedCategories = [];
-    if (!state.removedCategories.includes(name)) state.removedCategories.push(name);
-  }
-  if (state.customCategories) {
-    state.customCategories = state.customCategories.filter(c => c !== name);
-  }
-  if (state.prefs.currentView === 'category:' + name) state.prefs.currentView = 'all';
-  saveState();
-  renderCategoryManageList();
-  render();
-}
 
 // ===================== CALENDAR =====================
 let calYear, calMonth, calViewMode = 'month';
@@ -3167,7 +3071,7 @@ function getCalEvents(dateStr) {
   state.tasks.forEach(t => {
     if (t.dueDate === dateStr && (calShowDone || !t.completed)) {
       if (calFilterAreas) return;
-      items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:t.completed?'done':'task', areaName:t.category || '', wsName:'' });
+      items.push({ type:'task', id:t.id, title:t.title, color:'#94a3b8', status:t.completed?'done':'task', areaName:'', wsName:'' });
     }
   });
   return items;
@@ -3188,7 +3092,6 @@ function renderCalendar() {
     filterHtml += `<span class="cal-filter-chip ${isOn && calFilterAreas ? 'on' : (!calFilterAreas ? 'on' : '')}" style="color:${a.color};background:${a.color}15;" onclick="toggleCalFilter('${a.id}')">`
       + `<span class="area-dot" style="background:${a.color}"></span>${esc(a.name)}</span>`;
   });
-  filterHtml += `<span class="cal-filter-chip ${calShowDone ? 'on' : ''}" style="color:var(--success);background:var(--success-light);margin-left:auto;" onclick="toggleCalShowDone()">&#10003; Show Completed</span>`;
   filterHtml += '</div>';
 
   if (calViewMode === 'month') {
@@ -3214,6 +3117,7 @@ function renderCalMonth(today, filterHtml) {
       <button onclick="calToday()">Today</button>
     </div>
     <div class="cal-nav">
+      <span class="cal-filter-chip ${calShowDone ? 'on' : ''}" style="color:#555;background:${calShowDone ? '#e0e7ef' : 'transparent'};border:1px solid #ccc;cursor:pointer;" onclick="toggleCalShowDone()">&#10003; Show Completed</span>
       <button class="${calViewMode==='month'?'active':''}" onclick="setCalViewMode('month')">Month</button>
       <button class="${calViewMode==='week'?'active':''}" onclick="setCalViewMode('week')">Week</button>
     </div>
@@ -3283,6 +3187,7 @@ function renderCalWeek(today, filterHtml) {
       <button onclick="calToday()">Today</button>
     </div>
     <div class="cal-nav">
+      <span class="cal-filter-chip ${calShowDone ? 'on' : ''}" style="color:#555;background:${calShowDone ? '#e0e7ef' : 'transparent'};border:1px solid #ccc;cursor:pointer;" onclick="toggleCalShowDone()">&#10003; Show Completed</span>
       <button class="${calViewMode==='month'?'active':''}" onclick="setCalViewMode('month')">Month</button>
       <button class="${calViewMode==='week'?'active':''}" onclick="setCalViewMode('week')">Week</button>
     </div>
@@ -4092,7 +3997,6 @@ function toggleOccCheckItem(occId, idx, checked) {
 function openMeetingNotes() {
   const modal = document.getElementById('meetingNotesModal');
   document.getElementById('meetingNotesText').value = '';
-  document.getElementById('meetingDefaultCategory').value = '';
   document.getElementById('extractedTasksContainer').style.display = 'none';
   document.getElementById('extractedTasksList').innerHTML = '';
 
@@ -4184,9 +4088,7 @@ async function extractTasksAI() {
   const { apiUrl, apiKey, model } = state.settings;
   if (!apiKey) { alert('Configure your API key in Settings first.'); return; }
 
-  const cats = getAllCategories().join(', ');
-
-  const prompt = `Extract action items/tasks from the following meeting notes. Return a JSON array of objects with: title (string), priority (high/medium/low/none), category (one of: ${cats}, or suggest new), dueDate (YYYY-MM-DD or null). Only return the JSON array, no other text.\n\nMeeting notes:\n${text}`;
+  const prompt = `Extract action items/tasks from the following meeting notes. Return a JSON array of objects with: title (string), priority (high/medium/low/none), dueDate (YYYY-MM-DD or null). Only return the JSON array, no other text.\n\nMeeting notes:\n${text}`;
 
   try {
     const btn = document.getElementById('aiExtractBtn');
@@ -4212,7 +4114,6 @@ async function extractTasksAI() {
     const candidates = items.map(item => ({
       title: item.title || '',
       priority: item.priority || 'none',
-      category: item.category || '',
       suggestedDate: item.dueDate || null,
       selected: true
     }));
@@ -4230,11 +4131,7 @@ async function extractTasksAI() {
 function renderExtractedTasks(candidates) {
   const container = document.getElementById('extractedTasksContainer');
   const list = document.getElementById('extractedTasksList');
-  const defCat = document.getElementById('meetingDefaultCategory').value;
-  const cats = getAllCategories();
-
   list.innerHTML = candidates.map((c, i) => {
-    const cat = c.category || defCat;
     return `<div class="extracted-task-row" data-idx="${i}">
       <input type="checkbox" ${c.selected ? 'checked' : ''}>
       <input type="text" value="${esc(c.title)}">
@@ -4244,7 +4141,6 @@ function renderExtractedTasks(candidates) {
         <option value="medium" ${c.priority==='medium'?'selected':''}>2-Medium</option>
         <option value="low" ${c.priority==='low'?'selected':''}>3-Low</option>
       </select>
-      <input type="text" value="${esc(cat)}" list="categoryDatalist" placeholder="Category" style="width:100px;">
       <input type="date" value="${c.suggestedDate || ''}" style="width:130px;">
     </div>`;
   }).join('');
@@ -4265,15 +4161,13 @@ function addExtractedTasks() {
   rows.forEach(row => {
     const checked = row.querySelector('input[type="checkbox"]').checked;
     if (!checked) return;
-    const inputs = row.querySelectorAll('input[type="text"]');
-    const title = inputs[0].value.trim();
+    const title = row.querySelector('input[type="text"]').value.trim();
     if (!title) return;
     const priority = row.querySelector('.ext-priority').value;
-    const category = inputs[1].value.trim();
     const dueDate = row.querySelector('input[type="date"]').value || null;
 
     state.tasks.push({
-      id: uuid(), title, notes: '', priority, category,
+      id: uuid(), title, notes: '', priority,
       dueDate, recurrence: null, subtasks: [],
       completed: false, completedAt: null,
       createdAt: new Date().toISOString()
@@ -4342,7 +4236,6 @@ function renderBriefHtml(data, includeButtons) {
       html += `<div class="brief-task-item">
         <span class="priority-dot high"></span>
         <span>${esc(t.title)}</span>
-        <span class="brief-cat">${esc(t.category||'')}</span>
       </div>`;
     });
     html += '</div>';
@@ -4355,7 +4248,7 @@ function renderBriefHtml(data, includeButtons) {
       html += `<div class="brief-task-item">
         <span class="priority-dot ${t.priority||'none'}"></span>
         <span>${esc(t.title)}</span>
-        <span class="brief-cat">${esc(t.category||'')} &middot; ${formatDate(t.dueDate)}</span>
+        <span class="brief-cat">${formatDate(t.dueDate)}</span>
       </div>`;
     });
     if (data.overdueTasks.length > 10) html += `<div style="font-size:12px;color:var(--text-muted);padding:4px 0;">...and ${data.overdueTasks.length - 10} more</div>`;
@@ -4369,7 +4262,6 @@ function renderBriefHtml(data, includeButtons) {
       html += `<div class="brief-task-item">
         <span class="priority-dot ${t.priority||'none'}"></span>
         <span>${esc(t.title)}</span>
-        <span class="brief-cat">${esc(t.category||'')}</span>
       </div>`;
     });
     html += '</div>';
@@ -4425,7 +4317,7 @@ function emailBrief() {
   if (data.highPriority.length > 0) {
     body += `--- TOP PRIORITY ---\n`;
     data.highPriority.forEach(t => {
-      body += `  [1-High] ${t.title}${t.category ? ' (' + t.category + ')' : ''}\n`;
+      body += `  [1-High] ${t.title}\n`;
     });
     body += '\n';
   }
@@ -4433,7 +4325,7 @@ function emailBrief() {
   if (data.overdueTasks.length > 0) {
     body += `--- OVERDUE ---\n`;
     data.overdueTasks.forEach(t => {
-      body += `  [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.category ? ' (' + t.category + ')' : ''} - was due ${formatDate(t.dueDate)}\n`;
+      body += `  [${PRIORITY_LABELS[t.priority||'none']}] ${t.title} - was due ${formatDate(t.dueDate)}\n`;
     });
     body += '\n';
   }
@@ -4441,7 +4333,7 @@ function emailBrief() {
   if (data.todayTasks.length > 0) {
     body += `--- TODAY ---\n`;
     data.todayTasks.forEach(t => {
-      body += `  [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.category ? ' (' + t.category + ')' : ''}\n`;
+      body += `  [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}\n`;
     });
     body += '\n';
   }
@@ -4558,7 +4450,7 @@ async function generateDayPlan() {
   // Gather today's tasks
   const todayTasks = state.tasks.filter(t => !t.completed && (isToday(t.dueDate) || isOverdue(t.dueDate)));
   const taskList = todayTasks.map(t => {
-    return `- [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.category ? ' ('+t.category+')' : ''}${t.notes ? ' -- Notes: '+t.notes : ''}`;
+    return `- [${PRIORITY_LABELS[t.priority||'none']}] ${t.title}${t.notes ? ' -- Notes: '+t.notes : ''}`;
   }).join('\n');
 
   const prompt = `You are a personal productivity assistant. I'm sharing a screenshot of my calendar for today and my task list.
@@ -4650,8 +4542,6 @@ function getSyncData() {
   return JSON.stringify({
     tasks: state.tasks,
     inbox: state.inbox,
-    customCategories: state.customCategories || [],
-    removedCategories: state.removedCategories || [],
     syncedAt: new Date().toISOString()
   });
 }
@@ -4729,8 +4619,6 @@ async function syncPull() {
     const cloudData = JSON.parse(file.content);
     state.tasks = cloudData.tasks || [];
     state.inbox = cloudData.inbox || [];
-    state.customCategories = cloudData.customCategories || [];
-    state.removedCategories = cloudData.removedCategories || [];
     state.settings.syncToken = token;
     state.settings.syncGistId = gistId;
     saveState();
@@ -4787,7 +4675,7 @@ function saveSettings() {
 
 // ===================== EXPORT / IMPORT =====================
 function exportData() {
-  const data = JSON.stringify({ tasks: state.tasks, inbox: state.inbox, customCategories: state.customCategories || [], removedCategories: state.removedCategories || [] }, null, 2);
+  const data = JSON.stringify({ tasks: state.tasks, inbox: state.inbox }, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -4808,8 +4696,6 @@ function importData(event) {
       const data = JSON.parse(e.target.result);
       if (data.tasks) state.tasks = data.tasks;
       if (data.inbox) state.inbox = data.inbox;
-      if (data.customCategories) state.customCategories = data.customCategories;
-      if (data.removedCategories) state.removedCategories = data.removedCategories;
       saveState();
       render();
       alert('Data imported successfully.');
@@ -4848,8 +4734,7 @@ document.addEventListener('keydown', function(e) {
   else if (e.key === 'Escape') { closeAllModals(); }
   else if (e.key === '1') { state.prefs.groupBy='none'; saveState(); render(); }
   else if (e.key === '2') { state.prefs.groupBy='date'; saveState(); render(); }
-  else if (e.key === '3') { state.prefs.groupBy='category'; saveState(); render(); }
-  else if (e.key === '4') { state.prefs.groupBy='priority'; saveState(); render(); }
+  else if (e.key === '3') { state.prefs.groupBy='priority'; saveState(); render(); }
 });
 
 function closeAllModals() {
@@ -5075,7 +4960,6 @@ function renderWeeklyReviewStep() {
       completed.forEach(t => {
         html += `<div style="padding:6px 8px;background:var(--success-light);border-radius:6px;margin-bottom:4px;font-size:13px;display:flex;align-items:center;gap:8px;">
           <span style="color:var(--success);">✓</span> ${esc(t.title)}
-          ${t.category ? `<span style="font-size:11px;color:var(--text-muted);">${esc(t.category)}</span>` : ''}
         </div>`;
       });
       body.innerHTML = html;
