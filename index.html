@@ -523,6 +523,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   display: flex;
   flex: 1;
   overflow: hidden;
+  min-height: 0;
 }
 
 /* SIDEBAR */
@@ -593,7 +594,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 /* MAIN */
 .main {
-  flex:1; display:flex; flex-direction:column; overflow-y:auto;
+  flex:1; display:flex; flex-direction:column; overflow:hidden; min-height:0;
 }
 
 /* DASHBOARD STATS */
@@ -716,7 +717,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 /* TASK LIST */
 .task-list-container {
-  flex:1; overflow-y:auto; padding:20px 24px;
+  flex:1; overflow-y:auto; padding:20px 24px; min-height:0;
 }
 .group-header {
   display:flex; align-items:center; gap:8px;
