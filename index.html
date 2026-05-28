@@ -1108,15 +1108,44 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
   /* Compact view adjustments */
   .compact .task-card { padding:6px 10px; }
+
+  /* Team toggle */
+  .team-toggle button { padding:3px 8px; font-size:10px; }
+
+  /* Occurrence cards */
+  .occ-card { padding:8px 10px; }
+  .occ-card .occ-title { font-size:13px; }
+  .occ-card .occ-meta { font-size:10px; gap:4px; }
+
+  /* Toolbar area filter */
+  .toolbar { flex-wrap:wrap; }
+
+  /* Rich editor */
+  .rich-toolbar { gap:1px; padding:3px 4px; }
+  .rich-toolbar button { padding:2px 5px; font-size:11px; }
+  .rich-editor { min-height:80px; padding:8px 10px; font-size:13px; }
+
+  /* Work stream detail */
+  .ws-detail { padding:16px; }
+  .ws-detail-header h2 { font-size:18px; }
+  .ws-actions { flex-wrap:wrap; gap:6px; }
+  .ws-actions button { font-size:11px; padding:5px 10px; }
+
+  /* Calendar */
+  .cal-container { padding:8px 10px; }
+  .cal-filters { gap:4px; }
+  .cal-filter-chip { font-size:10px; padding:3px 8px; }
+
+  /* Topbar user area */
+  .topbar-user { gap:4px; font-size:11px; }
 }
 
 @media (max-width: 480px) {
-  .dash-cards { grid-template-columns: repeat(3, 1fr); gap:6px; }
-  .dash-card { padding:6px 6px; }
-  .dash-card-num { font-size:18px; }
-  .dash-card-label { font-size:8px; }
   .topbar-logo { font-size:16px; }
+  .topbar-logo span { display:none; }
   .task-card { margin-bottom:6px; }
+  .team-toggle button { padding:2px 6px; font-size:9px; }
+  .topbar-user button { padding:3px 6px; font-size:10px; }
 }
 </style>
 </head>
@@ -1185,7 +1214,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   <!-- SIDEBAR -->
   <div class="sidebar" id="sidebar">
     <div class="sidebar-search">
-      <input type="text" id="searchInput" placeholder="Search tasks... ( / )" oninput="onSearch()">
+      <input type="text" id="searchInput" placeholder="Search... ( / )" oninput="onSearch()">
     </div>
 
 
@@ -1575,6 +1604,7 @@ let saveDebounceTimer = null;
 const SAVE_DEBOUNCE_MS = 1500;
 let teamScope = 'team'; // 'mine' or 'team'
 let viewAreaFilter = ''; // '' = all areas, or area id
+let completedRange = 'recent'; // 'recent' = last 7 days, 'all' = all time
 
 function initFirebase() {
   firebaseApp = firebase.initializeApp(firebaseConfig);
@@ -1969,14 +1999,29 @@ function render() {
   // Get matching occurrences for date-based views
   const today = todayStr();
   let viewOccs = [];
-  if (!searchTerm) {
+  if (searchTerm) {
+    viewOccs = state.occurrences.filter(o => o.status !== 'done' && isMyOccurrence(o)).filter(o => {
+      const ws = state.workStreams.find(w => w.id === o.workStreamId);
+      return (o.title || '').toLowerCase().includes(searchTerm) ||
+        (o.notes || '').toLowerCase().includes(searchTerm) ||
+        (ws?.name || '').toLowerCase().includes(searchTerm);
+    });
+  } else {
     const pending = state.occurrences.filter(o => o.status !== 'done' && o.status !== 'waiting' && isMyOccurrence(o));
     if (view === 'today') viewOccs = pending.filter(o => o.dueDate === today);
     else if (view === 'tomorrow') viewOccs = pending.filter(o => isTomorrow(o.dueDate));
     else if (view === 'overdue') viewOccs = pending.filter(o => o.dueDate && o.dueDate < today);
     else if (view === 'waiting') viewOccs = state.occurrences.filter(o => o.status === 'waiting' && isMyOccurrence(o));
     else if (view === 'all') viewOccs = state.occurrences.filter(o => o.status !== 'done' && isMyOccurrence(o));
-    else if (view === 'completed') viewOccs = state.occurrences.filter(o => o.status === 'done' && isMyOccurrence(o));
+    else if (view === 'completed') {
+      let doneOccs = state.occurrences.filter(o => o.status === 'done' && isMyOccurrence(o));
+      if (completedRange === 'recent') {
+        const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 7);
+        const cutoffStr = cutoff.toISOString();
+        doneOccs = doneOccs.filter(o => o.completedAt && o.completedAt >= cutoffStr);
+      }
+      viewOccs = doneOccs;
+    }
   }
   // Apply area filter
   if (viewAreaFilter) {
@@ -1997,10 +2042,19 @@ function render() {
 
   let html = '';
 
+  // Completed view range toggle
+  if (view === 'completed' && !searchTerm) {
+    html += `<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;font-size:13px;">
+      <span style="color:var(--text-muted);">Show:</span>
+      <button onclick="setCompletedRange('recent')" style="padding:4px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${completedRange==='recent'?'var(--accent)':'transparent'};color:${completedRange==='recent'?'#fff':'var(--text-muted)'};">Last 7 Days</button>
+      <button onclick="setCompletedRange('all')" style="padding:4px 12px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border);background:${completedRange==='all'?'var(--accent)':'transparent'};color:${completedRange==='all'?'#fff':'var(--text-muted)'};">All Time</button>
+    </div>`;
+  }
+
   // Show search results banner when searching
   if (searchTerm) {
     html += `<div style="padding:8px 14px;margin-bottom:12px;background:var(--accent-light);border:1px solid var(--accent);border-radius:var(--radius);font-size:13px;display:flex;align-items:center;justify-content:space-between;">
-      <span>Showing <strong>${tasks.length}</strong> result${tasks.length !== 1 ? 's' : ''} for "<strong>${esc(searchTerm)}</strong>" across all tasks</span>
+      <span>Showing <strong>${totalItems}</strong> result${totalItems !== 1 ? 's' : ''} for "<strong>${esc(searchTerm)}</strong>"</span>
       <button onclick="document.getElementById('searchInput').value='';onSearch();" style="background:none;border:none;color:var(--accent);cursor:pointer;font-size:13px;font-weight:600;">Clear search</button>
     </div>`;
   }
@@ -2185,6 +2239,11 @@ function updateToolbar() {
 
 function onAreaFilterChange() {
   viewAreaFilter = document.getElementById('areaFilterSelect').value;
+  render();
+}
+
+function setCompletedRange(range) {
+  completedRange = range;
   render();
 }
 
