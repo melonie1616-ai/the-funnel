@@ -3153,7 +3153,7 @@ function updateAreaWorkStreamList() {
     html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')">
       <span class="area-dot" style="background:${area.color}"></span>
       ${esc(area.name)}
-      ${totalActive > 0 ? `<span class="ws-count">${totalActive}</span>` : ''}
+      ${totalActive > 0 ? `<span class="ws-count">(${totalActive})</span>` : ''}
       <span class="area-toggle">&#9654;</span>
     </div>`;
     if (isExpanded) {
@@ -3163,7 +3163,7 @@ function updateAreaWorkStreamList() {
         const isActive = currentWsView === ws.id;
         html += `<div class="sidebar-ws-item ${isActive ? 'active' : ''}" onclick="showWorkStreamDetail('${ws.id}')">
           ${esc(ws.name)}
-          ${count > 0 ? `<span class="ws-count">${count}</span>` : ''}
+          ${count > 0 ? `<span class="ws-count">(${count})</span>` : ''}
         </div>`;
       });
       if (wsList.length === 0) {
@@ -3188,7 +3188,7 @@ function updateAreaWorkStreamList() {
         const isActive = currentWsView === ws.id;
         html += `<div class="sidebar-ws-item ${isActive ? 'active' : ''}" onclick="showWorkStreamDetail('${ws.id}')">
           ${esc(ws.name)}
-          ${count > 0 ? `<span class="ws-count">${count}</span>` : ''}
+          ${count > 0 ? `<span class="ws-count">(${count})</span>` : ''}
         </div>`;
       });
       html += `</div>`;
