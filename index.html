@@ -1312,7 +1312,10 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     <div class="sidebar-section">
       <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
         Work Streams
-        <button class="sidebar-add-btn" onclick="openWorkStreamModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Add work stream">&#10010;</button>
+        <span style="display:flex;gap:6px;">
+          <button class="sidebar-add-btn" onclick="openAreaModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Manage areas">&#9881;</button>
+          <button class="sidebar-add-btn" onclick="openWorkStreamModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Add work stream">&#10010;</button>
+        </span>
       </div>
       <div id="areaWorkStreamList"></div>
     </div>
@@ -1550,6 +1553,27 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     </div>
     <div class="modal-footer">
       <button class="btn btn-secondary" onclick="closeCategoryModal()">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- AREA MANAGEMENT MODAL -->
+<div class="modal-overlay" id="areaModal">
+  <div class="modal" style="width:480px">
+    <div class="modal-header">
+      <h2>Manage Areas</h2>
+      <button class="modal-close" onclick="closeAreaModal()">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;gap:8px;margin-bottom:16px;">
+        <input type="color" id="newAreaColor" value="#6366f1" style="width:40px;height:38px;padding:2px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;">
+        <input type="text" id="newAreaName" placeholder="New area name..." onkeydown="if(event.key==='Enter')addArea()" style="flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);outline:none;">
+        <button class="btn btn-primary" onclick="addArea()">Add</button>
+      </div>
+      <div id="areaManageList"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeAreaModal()">Done</button>
     </div>
   </div>
 </div>
@@ -3001,6 +3025,84 @@ function deleteCategory(name) {
   render();
 }
 
+// ===================== AREA MANAGEMENT =====================
+function openAreaModal() {
+  document.getElementById('newAreaName').value = '';
+  document.getElementById('newAreaColor').value = '#6366f1';
+  renderAreaManageList();
+  document.getElementById('areaModal').classList.add('open');
+  setTimeout(() => document.getElementById('newAreaName').focus(), 100);
+}
+
+function closeAreaModal() {
+  document.getElementById('areaModal').classList.remove('open');
+  updateAreaWorkStreamList();
+  render();
+}
+
+function renderAreaManageList() {
+  const list = document.getElementById('areaManageList');
+  if (state.areas.length === 0) {
+    list.innerHTML = '<p style="color:var(--text-muted);font-size:13px;">No areas yet.</p>';
+    return;
+  }
+  list.innerHTML = state.areas.map(a => {
+    const wsCount = state.workStreams.filter(ws => ws.areaId === a.id).length;
+    return `<div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:var(--bg);border-radius:var(--radius-sm);margin-bottom:6px;">
+      <input type="color" value="${a.color}" onchange="updateAreaColor('${a.id}',this.value)" style="width:28px;height:28px;padding:1px;border:1px solid var(--border);border-radius:4px;cursor:pointer;flex-shrink:0;">
+      <span style="flex:1;font-size:13px;font-weight:500;">${esc(a.name)}</span>
+      <span style="font-size:11px;color:var(--text-muted);">${wsCount} stream${wsCount!==1?'s':''}</span>
+      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;" onclick="renameArea('${a.id}')">Rename</button>
+      <button class="btn btn-secondary" style="padding:3px 8px;font-size:11px;color:var(--danger);" onclick="deleteArea('${a.id}')">Delete</button>
+    </div>`;
+  }).join('');
+}
+
+function addArea() {
+  const name = document.getElementById('newAreaName').value.trim();
+  const color = document.getElementById('newAreaColor').value;
+  if (!name) return;
+  if (state.areas.some(a => a.name.toLowerCase() === name.toLowerCase())) {
+    alert('An area with that name already exists.');
+    return;
+  }
+  state.areas.push({ id: uuid(), name, color });
+  saveState();
+  document.getElementById('newAreaName').value = '';
+  renderAreaManageList();
+}
+
+function renameArea(areaId) {
+  const area = state.areas.find(a => a.id === areaId);
+  if (!area) return;
+  const newName = prompt('Rename "' + area.name + '" to:', area.name);
+  if (!newName || newName.trim() === '' || newName.trim() === area.name) return;
+  area.name = newName.trim();
+  saveState();
+  renderAreaManageList();
+}
+
+function updateAreaColor(areaId, color) {
+  const area = state.areas.find(a => a.id === areaId);
+  if (!area) return;
+  area.color = color;
+  saveState();
+}
+
+function deleteArea(areaId) {
+  const area = state.areas.find(a => a.id === areaId);
+  if (!area) return;
+  const wsCount = state.workStreams.filter(ws => ws.areaId === areaId).length;
+  const msg = wsCount > 0
+    ? `Delete "${area.name}"? ${wsCount} work stream(s) will become unassigned.`
+    : `Delete "${area.name}"?`;
+  if (!confirm(msg)) return;
+  state.workStreams.forEach(ws => { if (ws.areaId === areaId) ws.areaId = ''; });
+  state.areas = state.areas.filter(a => a.id !== areaId);
+  saveState();
+  renderAreaManageList();
+}
+
 // ===================== WORK STREAMS =====================
 let editingWsId = null;
 let editingOccId = null;
@@ -3067,6 +3169,28 @@ function updateAreaWorkStreamList() {
       html += `</div>`;
     }
   });
+  // Show unassigned work streams if any
+  const unassigned = state.workStreams.filter(ws => (!ws.areaId || !state.areas.some(a => a.id === ws.areaId)) && ws.status !== 'completed');
+  if (unassigned.length > 0) {
+    const isExpanded = !state.prefs.collapsedAreas['_unassigned'];
+    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('_unassigned')">
+      <span class="area-dot" style="background:#94a3b8"></span>
+      Unassigned
+      <span class="area-toggle">&#9654;</span>
+    </div>`;
+    if (isExpanded) {
+      html += `<div class="sidebar-ws-list">`;
+      unassigned.forEach(ws => {
+        const count = getActiveOccCount(ws.id);
+        const isActive = currentWsView === ws.id;
+        html += `<div class="sidebar-ws-item ${isActive ? 'active' : ''}" onclick="showWorkStreamDetail('${ws.id}')">
+          ${esc(ws.name)}
+          ${count > 0 ? `<span class="ws-count">${count}</span>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+  }
   container.innerHTML = html;
 }
 
