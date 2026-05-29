@@ -966,6 +966,48 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 :root.dark-mode .sticky-note textarea { color:#fef9c3; }
 :root.dark-mode .sticky-note textarea::placeholder { color:#fde68a; }
 
+/* Links page */
+.links-page { padding:24px 28px; }
+.links-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.links-header h2 { font-size:20px; font-weight:700; color:var(--text); margin:0; }
+.links-header button { padding:6px 16px; font-size:13px; }
+.link-group { margin-bottom:24px; }
+.link-group-header {
+  display:flex; align-items:center; justify-content:space-between; padding:8px 0;
+  border-bottom:2px solid var(--border); margin-bottom:10px; cursor:pointer; user-select:none;
+}
+.link-group-header h3 { font-size:15px; font-weight:700; color:var(--text); margin:0; display:flex; align-items:center; gap:8px; }
+.link-group-header h3::before { content:'▸'; font-size:12px; color:var(--text-muted); transition:transform 0.15s; }
+.link-group-header.expanded h3::before { transform:rotate(90deg); }
+.link-group-actions { display:flex; gap:4px; }
+.link-group-actions button {
+  background:none; border:none; cursor:pointer; font-size:13px; color:var(--text-muted);
+  padding:2px 6px; border-radius:var(--radius-sm); transition:all 0.15s;
+}
+.link-group-actions button:hover { background:var(--accent-light); color:var(--accent); }
+.link-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
+.link-card {
+  display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
+  background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
+  cursor:pointer; transition:all 0.15s; text-decoration:none; color:var(--text);
+}
+.link-card:hover { border-color:var(--accent); box-shadow:0 2px 8px rgba(99,102,241,0.1); transform:translateY(-1px); }
+.link-card-icon {
+  width:36px; height:36px; border-radius:8px; display:flex; align-items:center; justify-content:center;
+  font-size:18px; flex-shrink:0; background:var(--accent-light); color:var(--accent);
+}
+.link-card-info { flex:1; min-width:0; }
+.link-card-title { font-size:14px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.link-card-url { font-size:11px; color:var(--text-muted); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-top:2px; }
+.link-card-desc { font-size:12px; color:var(--text-muted); margin-top:4px; line-height:1.4; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+.link-card-actions { display:flex; gap:2px; flex-shrink:0; opacity:0; transition:opacity 0.15s; }
+.link-card:hover .link-card-actions { opacity:1; }
+.link-card-actions button {
+  background:none; border:none; cursor:pointer; font-size:12px; color:var(--text-muted);
+  padding:4px; border-radius:var(--radius-sm);
+}
+.link-card-actions button:hover { color:var(--accent); background:var(--accent-light); }
+
 /* Sync button states */
 #syncBtn.syncing { animation: spin 1s linear infinite; }
 #syncBtn.sync-ok { background:var(--success) !important; }
@@ -1210,6 +1252,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     <div class="sidebar-section">
       <div class="sidebar-heading">Views</div>
       <div class="sidebar-item" data-view="calendar" onclick="switchView('calendar')">&#128197; Calendar</div>
+      <div class="sidebar-item" data-view="links" onclick="switchView('links')">&#128279; Links</div>
       <div class="sidebar-item active" data-view="all" onclick="switchView('all')">&#128203; All Active <span class="count" id="countAll">0</span></div>
       <div class="sidebar-item" data-view="today" onclick="switchView('today')">&#9728; Due Today <span class="count" id="countToday">0</span></div>
       <div class="sidebar-item" data-view="tomorrow" onclick="switchView('tomorrow')">&#127749; Due Tomorrow <span class="count" id="countTomorrow">0</span></div>
@@ -1276,6 +1319,60 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       </div>
     </div>
 
+  </div>
+</div>
+
+<!-- LINK MODAL -->
+<div class="modal-overlay" id="linkModalOverlay" style="display:none" onclick="closeLinkModal()">
+  <div class="modal" style="width:480px;" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3 id="linkModalTitle">Add Link</h3><button class="modal-close" onclick="closeLinkModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Title</label><input type="text" id="linkTitleInput" placeholder="e.g. Azure DevOps"></div>
+      <div class="form-group"><label>URL</label><input type="text" id="linkUrlInput" placeholder="https://..."></div>
+      <div class="form-group"><label>Description (optional)</label><input type="text" id="linkDescInput" placeholder="Brief description"></div>
+      <div class="form-group"><label>Group</label>
+        <select id="linkGroupSelect"></select>
+      </div>
+      <div class="form-group"><label>Icon</label>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;" id="linkIconPicker">
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🔗')">🔗</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('💻')">💻</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📂')">📂</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🌐')">🌐</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📊')">📊</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📧')">📧</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📝')">📝</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🛠')">🛠</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📁')">📁</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🗄')">🗄</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🔒')">🔒</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('⚙')">⚙</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📌')">📌</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('🚀')">🚀</button>
+          <button type="button" class="link-icon-opt" onclick="pickLinkIcon('📈')">📈</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteLinkBtn" onclick="deleteLink()" style="margin-right:auto;display:none;">Delete</button>
+      <button class="btn btn-secondary" onclick="closeLinkModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLink()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- LINK GROUP MODAL -->
+<div class="modal-overlay" id="linkGroupModalOverlay" style="display:none" onclick="closeLinkGroupModal()">
+  <div class="modal" style="width:380px;" onclick="event.stopPropagation()">
+    <div class="modal-header"><h3 id="linkGroupModalTitle">Add Group</h3><button class="modal-close" onclick="closeLinkGroupModal()">&times;</button></div>
+    <div class="modal-body">
+      <div class="form-group"><label>Group Name</label><input type="text" id="linkGroupNameInput" placeholder="e.g. Repositories"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" id="deleteLinkGroupBtn" onclick="deleteLinkGroup()" style="margin-right:auto;display:none;">Delete</button>
+      <button class="btn btn-secondary" onclick="closeLinkGroupModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveLinkGroup()">Save</button>
+    </div>
   </div>
 </div>
 
@@ -1662,6 +1759,8 @@ const DEFAULT_STATE = {
   areas: [],
   workStreams: [],
   occurrences: [],
+  links: [],
+  linkGroups: [],
   settings: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     apiKey: '',
@@ -1696,6 +1795,8 @@ async function loadState() {
       state.areas = data.areas || [];
       state.workStreams = data.workStreams || [];
       state.occurrences = data.occurrences || [];
+      state.links = data.links || [];
+      state.linkGroups = data.linkGroups || [];
       state.settings = { ...state.settings, ...(data.settings || {}) };
       state.prefs = { ...state.prefs, ...(data.prefs || {}) };
     }
@@ -1724,6 +1825,8 @@ async function _saveToFirestore() {
       areas: state.areas,
       workStreams: state.workStreams,
       occurrences: state.occurrences,
+      links: state.links || [],
+      linkGroups: state.linkGroups || [],
       settings: state.settings,
       prefs: state.prefs,
       lastUpdatedBy: currentUser.email,
@@ -1743,6 +1846,8 @@ function listenForChanges() {
           state.areas = data.areas || [];
           state.workStreams = data.workStreams || [];
           state.occurrences = data.occurrences || [];
+          state.links = data.links || [];
+          state.linkGroups = data.linkGroups || [];
           state.settings = { ...state.settings, ...(data.settings || {}) };
           render();
         }
@@ -1954,11 +2059,16 @@ function render() {
   const view = state.prefs.currentView;
   const searchTerm = getSearchTerm();
 
-  // If searching, always show list view (skip calendar/workstream detail)
+  // If searching, always show list view (skip calendar/workstream/links detail)
   if (!searchTerm) {
     if (view === 'calendar') {
       currentWsView = null;
       renderCalendar();
+      return;
+    }
+    if (view === 'links') {
+      currentWsView = null;
+      renderLinksView();
       return;
     }
     if (view.startsWith('workstream:')) {
@@ -3652,6 +3762,248 @@ function esc(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ===================== LINKS PAGE =====================
+let editingLinkId = null;
+let editingLinkGroupId = null;
+let selectedLinkIcon = '🔗';
+
+function renderLinksView() {
+  currentWsView = null;
+  document.getElementById('toolbar').style.display = 'none';
+  const container = document.getElementById('taskListContainer');
+
+  if (!state.links) state.links = [];
+  if (!state.linkGroups) state.linkGroups = [];
+
+  const groups = state.linkGroups.slice().sort((a, b) => (a.order || 0) - (b.order || 0));
+  const ungrouped = state.links.filter(l => !l.groupId || !groups.find(g => g.id === l.groupId));
+
+  let html = `<div class="links-page">
+    <div class="links-header">
+      <h2>&#128279; Links</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-secondary" onclick="openLinkGroupModal()">+ Group</button>
+        <button class="btn btn-primary" onclick="openLinkModal()">+ Link</button>
+      </div>
+    </div>`;
+
+  groups.forEach(g => {
+    const groupLinks = state.links.filter(l => l.groupId === g.id);
+    html += `<div class="link-group">
+      <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
+        <h3>${esc(g.name)} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${groupLinks.length})</span></h3>
+        <div class="link-group-actions" onclick="event.stopPropagation()">
+          <button onclick="openLinkGroupModal('${g.id}')" title="Edit group">&#9998;</button>
+          <button onclick="openLinkModal(null,'${g.id}')" title="Add link to group">+</button>
+        </div>
+      </div>
+      <div class="link-grid">`;
+    if (groupLinks.length === 0) {
+      html += `<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">No links yet. Click + to add one.</div>`;
+    }
+    groupLinks.forEach(l => { html += renderLinkCard(l); });
+    html += `</div></div>`;
+  });
+
+  if (ungrouped.length > 0) {
+    html += `<div class="link-group">
+      <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
+        <h3>Ungrouped <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${ungrouped.length})</span></h3>
+      </div>
+      <div class="link-grid">`;
+    ungrouped.forEach(l => { html += renderLinkCard(l); });
+    html += `</div></div>`;
+  }
+
+  if (groups.length === 0 && ungrouped.length === 0) {
+    html += `<div class="empty-state" style="text-align:center;padding:60px 20px;">
+      <h3>No links yet</h3>
+      <p>Add groups to organize your links, then add links to each group.</p>
+      <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+        <button class="btn btn-secondary" onclick="openLinkGroupModal()">+ Create Group</button>
+        <button class="btn btn-primary" onclick="openLinkModal()">+ Add Link</button>
+      </div>
+    </div>`;
+  }
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function renderLinkCard(l) {
+  const domain = (() => { try { return new URL(l.url).hostname; } catch { return l.url; } })();
+  return `<div class="link-card" onclick="window.open('${esc(l.url)}','_blank')">
+    <div class="link-card-icon">${l.icon || '🔗'}</div>
+    <div class="link-card-info">
+      <div class="link-card-title">${esc(l.title)}</div>
+      <div class="link-card-url">${esc(domain)}</div>
+      ${l.description ? `<div class="link-card-desc">${esc(l.description)}</div>` : ''}
+    </div>
+    <div class="link-card-actions" onclick="event.stopPropagation()">
+      <button onclick="openLinkModal('${l.id}')" title="Edit">&#9998;</button>
+    </div>
+  </div>`;
+}
+
+function openLinkModal(linkId, defaultGroupId) {
+  editingLinkId = linkId || null;
+  const modal = document.getElementById('linkModalOverlay');
+  const titleEl = document.getElementById('linkModalTitle');
+  const delBtn = document.getElementById('deleteLinkBtn');
+
+  const groupSel = document.getElementById('linkGroupSelect');
+  groupSel.innerHTML = '<option value="">No Group</option>';
+  (state.linkGroups || []).forEach(g => {
+    groupSel.innerHTML += `<option value="${g.id}">${esc(g.name)}</option>`;
+  });
+
+  if (linkId) {
+    const l = state.links.find(x => x.id === linkId);
+    if (!l) return;
+    titleEl.textContent = 'Edit Link';
+    document.getElementById('linkTitleInput').value = l.title;
+    document.getElementById('linkUrlInput').value = l.url;
+    document.getElementById('linkDescInput').value = l.description || '';
+    groupSel.value = l.groupId || '';
+    selectedLinkIcon = l.icon || '🔗';
+    delBtn.style.display = '';
+  } else {
+    titleEl.textContent = 'Add Link';
+    document.getElementById('linkTitleInput').value = '';
+    document.getElementById('linkUrlInput').value = '';
+    document.getElementById('linkDescInput').value = '';
+    groupSel.value = defaultGroupId || '';
+    selectedLinkIcon = '🔗';
+    delBtn.style.display = 'none';
+  }
+  updateLinkIconPicker();
+  modal.style.display = 'flex';
+  document.getElementById('linkTitleInput').focus();
+}
+
+function closeLinkModal() {
+  document.getElementById('linkModalOverlay').style.display = 'none';
+}
+
+function pickLinkIcon(icon) {
+  selectedLinkIcon = icon;
+  updateLinkIconPicker();
+}
+
+function updateLinkIconPicker() {
+  document.querySelectorAll('.link-icon-opt').forEach(btn => {
+    btn.style.outline = btn.textContent.trim() === selectedLinkIcon ? '2px solid var(--accent)' : 'none';
+    btn.style.borderRadius = '6px';
+    btn.style.padding = '4px 8px';
+    btn.style.fontSize = '18px';
+    btn.style.background = btn.textContent.trim() === selectedLinkIcon ? 'var(--accent-light)' : 'transparent';
+    btn.style.border = '1px solid var(--border)';
+    btn.style.cursor = 'pointer';
+  });
+}
+
+function saveLink() {
+  const title = document.getElementById('linkTitleInput').value.trim();
+  const url = document.getElementById('linkUrlInput').value.trim();
+  if (!title || !url) { alert('Title and URL are required.'); return; }
+
+  if (!state.links) state.links = [];
+
+  if (editingLinkId) {
+    const l = state.links.find(x => x.id === editingLinkId);
+    if (l) {
+      l.title = title;
+      l.url = url;
+      l.description = document.getElementById('linkDescInput').value.trim();
+      l.groupId = document.getElementById('linkGroupSelect').value || null;
+      l.icon = selectedLinkIcon;
+    }
+  } else {
+    state.links.push({
+      id: uuid(),
+      title, url,
+      description: document.getElementById('linkDescInput').value.trim(),
+      groupId: document.getElementById('linkGroupSelect').value || null,
+      icon: selectedLinkIcon,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveState();
+  closeLinkModal();
+  renderLinksView();
+}
+
+function deleteLink() {
+  if (!editingLinkId) return;
+  if (!confirm('Delete this link?')) return;
+  state.links = state.links.filter(l => l.id !== editingLinkId);
+  saveState();
+  closeLinkModal();
+  renderLinksView();
+}
+
+function openLinkGroupModal(groupId) {
+  editingLinkGroupId = groupId || null;
+  const modal = document.getElementById('linkGroupModalOverlay');
+  const titleEl = document.getElementById('linkGroupModalTitle');
+  const delBtn = document.getElementById('deleteLinkGroupBtn');
+
+  if (groupId) {
+    const g = state.linkGroups.find(x => x.id === groupId);
+    if (!g) return;
+    titleEl.textContent = 'Edit Group';
+    document.getElementById('linkGroupNameInput').value = g.name;
+    delBtn.style.display = '';
+  } else {
+    titleEl.textContent = 'Add Group';
+    document.getElementById('linkGroupNameInput').value = '';
+    delBtn.style.display = 'none';
+  }
+  modal.style.display = 'flex';
+  document.getElementById('linkGroupNameInput').focus();
+}
+
+function closeLinkGroupModal() {
+  document.getElementById('linkGroupModalOverlay').style.display = 'none';
+}
+
+function saveLinkGroup() {
+  const name = document.getElementById('linkGroupNameInput').value.trim();
+  if (!name) { alert('Group name is required.'); return; }
+
+  if (!state.linkGroups) state.linkGroups = [];
+
+  if (editingLinkGroupId) {
+    const g = state.linkGroups.find(x => x.id === editingLinkGroupId);
+    if (g) g.name = name;
+  } else {
+    state.linkGroups.push({
+      id: uuid(),
+      name,
+      order: state.linkGroups.length,
+      createdAt: new Date().toISOString()
+    });
+  }
+  saveState();
+  closeLinkGroupModal();
+  renderLinksView();
+}
+
+function deleteLinkGroup() {
+  if (!editingLinkGroupId) return;
+  const g = state.linkGroups.find(x => x.id === editingLinkGroupId);
+  const groupLinks = state.links.filter(l => l.groupId === editingLinkGroupId);
+  const msg = groupLinks.length > 0
+    ? `Delete "${g.name}" and move its ${groupLinks.length} link(s) to Ungrouped?`
+    : `Delete "${g.name}"?`;
+  if (!confirm(msg)) return;
+  state.linkGroups = state.linkGroups.filter(x => x.id !== editingLinkGroupId);
+  state.links.forEach(l => { if (l.groupId === editingLinkGroupId) l.groupId = null; });
+  saveState();
+  closeLinkGroupModal();
+  renderLinksView();
 }
 
 // ===================== STICKY NOTE =====================
