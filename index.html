@@ -3185,15 +3185,19 @@ function renderOccCard(o, today) {
   </div>`;
 }
 
+/** Circle on list cards: mark done (close) or reopen — not a 4-state cycle. */
 function cycleOccStatus(occId) {
   const o = state.occurrences.find(x => x.id === occId);
   if (!o) return;
-  const cycle = ['not-started', 'in-progress', 'waiting', 'done'];
-  o.status = cycle[(cycle.indexOf(o.status) + 1) % cycle.length];
-  if (o.status === 'done') o.completedAt = new Date().toISOString();
-  else o.completedAt = null;
+  if (o.status === 'done') {
+    o.status = 'not-started';
+    o.completedAt = null;
+  } else {
+    o.status = 'done';
+    o.completedAt = new Date().toISOString();
+  }
   saveState();
-  if (currentWsView) showWorkStreamDetail(currentWsView);
+  render();
 }
 
 // --- Notes & Checklist editing ---
