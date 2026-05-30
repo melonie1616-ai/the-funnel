@@ -2957,7 +2957,7 @@ function openWorkStreamModal(wsId, defaultAreaId) {
   const delBtn = document.getElementById('deleteWsBtn');
 
   const areaSelect = document.getElementById('wsAreaInput');
-  areaSelect.innerHTML = state.areas.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
+  areaSelect.innerHTML = '<option value="">-- Select Area --</option>' + state.areas.map(a => `<option value="${a.id}">${esc(a.name)}</option>`).join('');
 
   if (editingWsId) {
     const ws = state.workStreams.find(w => w.id === editingWsId);
@@ -3003,6 +3003,7 @@ function closeWorkStreamModal() {
 function saveWorkStream() {
   const name = document.getElementById('wsNameInput').value.trim();
   if (!name) { alert('Name is required.'); return; }
+  if (!document.getElementById('wsAreaInput').value) { alert('Please select an area.'); return; }
   const cadenceType = document.getElementById('wsCadenceType').value;
   const cadence = { type: cadenceType };
   if (cadenceType === 'xPerWeek' || cadenceType === 'xPerMonth') {
@@ -3039,8 +3040,7 @@ function saveWorkStream() {
   }
   saveState();
   closeWorkStreamModal();
-  updateAreaWorkStreamList();
-  if (currentWsView) showWorkStreamDetail(currentWsView);
+  render();
 }
 
 function deleteWorkStream() {
@@ -3404,7 +3404,7 @@ function confirmGenerate() {
 
   saveState();
   closeGenerateModal();
-  showWorkStreamDetail(generateWsId);
+  render();
 }
 
 // --- Occurrence Modal ---
@@ -3525,7 +3525,7 @@ function saveOccurrence() {
   if (o.status !== 'done') o.completedAt = null;
   saveState();
   closeOccurrenceModal();
-  if (currentWsView) showWorkStreamDetail(currentWsView);
+  render();
 }
 
 function deleteOccurrence() {
@@ -3534,7 +3534,7 @@ function deleteOccurrence() {
   state.occurrences = state.occurrences.filter(o => o.id !== editingOccId);
   saveState();
   closeOccurrenceModal();
-  if (currentWsView) showWorkStreamDetail(currentWsView);
+  render();
 }
 
 function toggleOccCheckItem(occId, idx, checked) {
