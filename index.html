@@ -599,6 +599,11 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   font-size:11px; font-weight:700;
   padding:2px 8px; border-radius:12px;
   min-width:24px; text-align:center;
+  transition: all 0.3s;
+}
+@keyframes pulse-badge {
+  0%, 100% { transform:scale(1); }
+  50% { transform:scale(1.12); }
 }
 .sidebar-search {
   padding: 12px 14px;
@@ -2301,9 +2306,30 @@ function updateCounts() {
     pendingOccs.filter(o => isTomorrow(o.dueDate)).length;
   const weekEl = document.getElementById('countWeek');
   if (weekEl) weekEl.textContent = weekCount;
-  document.getElementById('countOverdue').textContent = overdueCount;
-  document.getElementById('countWaiting').textContent = waitingCount;
+  const overdueEl = document.getElementById('countOverdue');
+  overdueEl.textContent = overdueCount;
+  overdueEl.style.background = overdueCount > 0 ? 'var(--danger)' : '';
+  overdueEl.style.color = overdueCount > 0 ? '#fff' : '';
+  overdueEl.style.borderRadius = overdueCount > 0 ? '10px' : '';
+  overdueEl.style.padding = overdueCount > 0 ? '1px 8px' : '';
+  overdueEl.style.fontWeight = overdueCount > 0 ? '700' : '';
+  overdueEl.style.animation = overdueCount > 0 ? 'pulse-badge 2s infinite' : '';
+
+  const waitingEl = document.getElementById('countWaiting');
+  waitingEl.textContent = waitingCount;
+  waitingEl.style.background = waitingCount > 0 ? 'var(--warning)' : '';
+  waitingEl.style.color = waitingCount > 0 ? '#fff' : '';
+  waitingEl.style.borderRadius = waitingCount > 0 ? '10px' : '';
+  waitingEl.style.padding = waitingCount > 0 ? '1px 8px' : '';
+  waitingEl.style.fontWeight = waitingCount > 0 ? '700' : '';
+
   document.getElementById('countCompleted').textContent = completedOccs;
+
+  // Highlight sidebar items
+  const overdueItem = document.querySelector('[data-view="overdue"]');
+  if (overdueItem) overdueItem.style.color = overdueCount > 0 ? 'var(--danger)' : '';
+  const waitingItem = document.querySelector('[data-view="waiting"]');
+  if (waitingItem) waitingItem.style.color = waitingCount > 0 ? 'var(--warning)' : '';
 
 }
 
