@@ -3347,6 +3347,17 @@ function computeGenDates(wsId, startDateStr, count) {
     }
   }
 
+  // Shift any weekend dates to the next Monday
+  dates = dates.map(dateStr => {
+    const d = new Date(dateStr + 'T12:00:00');
+    const day = d.getDay();
+    if (day === 0) d.setDate(d.getDate() + 1);      // Sunday → Monday
+    else if (day === 6) d.setDate(d.getDate() + 2);  // Saturday → Monday
+    return localDateStr(d);
+  });
+  // Remove duplicates that may result from shifting
+  dates = [...new Set(dates)];
+
   const existingDates = new Set(getOccurrencesForWs(wsId).map(o => o.dueDate));
   return dates.filter(d => !existingDates.has(d));
 }
