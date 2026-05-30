@@ -3404,7 +3404,7 @@ function confirmGenerate() {
   const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
   dates.forEach(dateStr => {
     const d = new Date(dateStr + 'T12:00:00');
-    const label = `${ws.name} - ${monthNames[d.getMonth()]} ${d.getDate()}`;
+    const label = ws.name;
     state.occurrences.push({
       id: uuid(),
       workStreamId: generateWsId,
@@ -4243,7 +4243,17 @@ function bootApp() {
     else if (day === 6) { d.setDate(d.getDate() + 2); o.dueDate = localDateStr(d); shifted++; }
   });
 
-  if (state.occurrences.length < before || shifted > 0) saveState();
+  // Strip " - Mon DD" date suffixes from occurrence titles
+  const datePattern = /\s*-\s+(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s+\d{1,2}$/;
+  let titlesCleaned = 0;
+  state.occurrences.forEach(o => {
+    if (o.title && datePattern.test(o.title)) {
+      o.title = o.title.replace(datePattern, '');
+      titlesCleaned++;
+    }
+  });
+
+  if (state.occurrences.length < before || shifted > 0 || titlesCleaned > 0) saveState();
 
   seedWorkStreams();
   applyDarkMode();
