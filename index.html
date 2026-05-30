@@ -1543,6 +1543,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <h2 id="occModalTitle">Edit Occurrence</h2>
       <button class="modal-close" onclick="closeOccurrenceModal()">&times;</button>
     </div>
+    <div id="occContext" style="padding:4px 24px 0;font-size:12px;color:var(--text-muted);display:none;align-items:center;gap:6px;"></div>
     <div class="modal-body">
       <div class="form-group">
         <label>Title</label>
@@ -3476,7 +3477,11 @@ function addAdHocOccurrence(wsId) {
   state.occurrences.push(newOcc);
 
   const modal = document.getElementById('occurrenceModal');
-  document.getElementById('occModalTitle').textContent = 'New Item - ' + ws.name;
+  document.getElementById('occModalTitle').textContent = 'New Item';
+  const area = state.areas.find(a => a.id === ws.areaId);
+  const ctxEl = document.getElementById('occContext');
+  ctxEl.innerHTML = `${area ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${area.color};"></span> <span>${esc(area.name)}</span> <span style="color:var(--border);">&#8250;</span>` : ''} <span style="font-weight:600;">${esc(ws.name)}</span>`;
+  ctxEl.style.display = 'flex';
   document.getElementById('deleteOccBtn').style.display = 'none';
   document.getElementById('occTitleInput').value = '';
   document.getElementById('occDueDateInput').value = newOcc.dueDate;
@@ -3506,6 +3511,15 @@ function openOccurrenceModal(occId) {
   if (!o) return;
   const modal = document.getElementById('occurrenceModal');
   document.getElementById('occModalTitle').textContent = 'Edit Occurrence';
+  const ws = state.workStreams.find(w => w.id === o.workStreamId);
+  const area = ws ? state.areas.find(a => a.id === ws.areaId) : null;
+  const ctxEl = document.getElementById('occContext');
+  if (ws) {
+    ctxEl.innerHTML = `${area ? `<span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${area.color};"></span> <span>${esc(area.name)}</span> <span style="color:var(--border);">&#8250;</span>` : ''} <span style="font-weight:600;">${esc(ws.name)}</span>`;
+    ctxEl.style.display = 'flex';
+  } else {
+    ctxEl.style.display = 'none';
+  }
   document.getElementById('deleteOccBtn').style.display = '';
   document.getElementById('occTitleInput').value = o.title;
   document.getElementById('occDueDateInput').value = o.dueDate || '';
