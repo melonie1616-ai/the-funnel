@@ -997,7 +997,9 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   padding:2px 6px; border-radius:var(--radius-sm); transition:all 0.15s;
 }
 .link-group-actions button:hover { background:var(--accent-light); color:var(--accent); }
-.link-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:10px; }
+.links-columns { display:grid; grid-template-columns:1fr 1fr; gap:20px; align-items:start; }
+@media (max-width:768px) { .links-columns { grid-template-columns:1fr; } }
+.link-grid { display:flex; flex-direction:column; gap:8px; }
 .link-card {
   display:flex; align-items:flex-start; gap:12px; padding:14px 16px;
   background:var(--bg-card); border:1px solid var(--border); border-radius:var(--radius);
@@ -3839,35 +3841,32 @@ function renderLinksView() {
       </div>
     </div>`;
 
-  groups.forEach(g => {
-    const groupLinks = state.links.filter(l => l.groupId === g.id);
-    html += `<div class="link-group">
-      <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
-        <h3>${esc(g.name)} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${groupLinks.length})</span></h3>
-        <div class="link-group-actions" onclick="event.stopPropagation()">
-          <button onclick="openLinkGroupModal('${g.id}')" title="Edit group">&#9998;</button>
-          <button onclick="openLinkModal(null,'${g.id}')" title="Add link to group">+</button>
-        </div>
-      </div>
-      <div class="link-grid">`;
-    if (groupLinks.length === 0) {
-      html += `<div style="grid-column:1/-1;text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">No links yet. Click + to add one.</div>`;
-    }
-    groupLinks.forEach(l => { html += renderLinkCard(l); });
-    html += `</div></div>`;
-  });
+  const allGroups = [...groups];
+  if (ungrouped.length > 0) allGroups.push({ id: '_ungrouped', name: 'Ungrouped', _links: ungrouped });
 
-  if (ungrouped.length > 0) {
-    html += `<div class="link-group">
-      <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
-        <h3>Ungrouped <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${ungrouped.length})</span></h3>
-      </div>
-      <div class="link-grid">`;
-    ungrouped.forEach(l => { html += renderLinkCard(l); });
-    html += `</div></div>`;
+  if (allGroups.length > 0) {
+    html += `<div class="links-columns">`;
+    allGroups.forEach(g => {
+      const groupLinks = g._links || state.links.filter(l => l.groupId === g.id);
+      html += `<div class="link-group">
+        <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
+          <h3>${esc(g.name)} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${groupLinks.length})</span></h3>
+          ${g.id !== '_ungrouped' ? `<div class="link-group-actions" onclick="event.stopPropagation()">
+            <button onclick="openLinkGroupModal('${g.id}')" title="Edit group">&#9998;</button>
+            <button onclick="openLinkModal(null,'${g.id}')" title="Add link to group">+</button>
+          </div>` : ''}
+        </div>
+        <div class="link-grid">`;
+      if (groupLinks.length === 0) {
+        html += `<div style="text-align:center;padding:16px;color:var(--text-muted);font-size:13px;">No links yet. Click + to add one.</div>`;
+      }
+      groupLinks.forEach(l => { html += renderLinkCard(l); });
+      html += `</div></div>`;
+    });
+    html += `</div>`;
   }
 
-  if (groups.length === 0 && ungrouped.length === 0) {
+  if (allGroups.length === 0) {
     html += `<div class="empty-state" style="text-align:center;padding:60px 20px;">
       <h3>No links yet</h3>
       <p>Add groups to organize your links, then add links to each group.</p>
