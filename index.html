@@ -3731,9 +3731,10 @@ function importData(event) {
 
 // ===================== KEYBOARD SHORTCUTS =====================
 document.addEventListener('keydown', function(e) {
-  // Don't fire shortcuts when typing in inputs
+  // Don't fire shortcuts when typing in inputs or contenteditable
   const tag = document.activeElement.tagName;
-  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') {
+  const isEditable = document.activeElement.isContentEditable;
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || isEditable) {
     if (e.key === 'Escape') {
       document.activeElement.blur();
       closeAllModals();
