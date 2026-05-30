@@ -1279,6 +1279,8 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
         Work Streams
         <span style="display:flex;gap:6px;">
+          <button class="sidebar-add-btn" onclick="collapseAllAreas()" style="padding:0;width:auto;font-size:11px;line-height:1;opacity:0.6;" title="Collapse all">&#9660;</button>
+          <button class="sidebar-add-btn" onclick="expandAllAreas()" style="padding:0;width:auto;font-size:11px;line-height:1;opacity:0.6;" title="Expand all">&#9650;</button>
           <button class="sidebar-add-btn" onclick="openAreaModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Manage areas">&#9881;</button>
           <button class="sidebar-add-btn" onclick="openWorkStreamModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Add work stream">&#10010;</button>
         </span>
@@ -2924,7 +2926,7 @@ function updateAreaWorkStreamList() {
     const wsList = getWorkStreamsByArea(area.id).filter(ws => isMyWorkStream(ws));
     const isExpanded = !state.prefs.collapsedAreas[area.id];
     const totalActive = wsList.reduce((sum, ws) => sum + getActiveOccCount(ws.id), 0);
-    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')">
+    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')" style="background:${area.color}22;border-left:3px solid ${area.color};margin:2px 8px;border-radius:4px;padding-left:12px;">
       <span class="area-dot" style="background:${area.color}"></span>
       ${esc(area.name)}
       ${totalActive > 0 ? `<span class="ws-count">(${totalActive})</span>` : ''}
@@ -2974,6 +2976,20 @@ function updateAreaWorkStreamList() {
 function toggleAreaCollapse(areaId) {
   if (!state.prefs.collapsedAreas) state.prefs.collapsedAreas = {};
   state.prefs.collapsedAreas[areaId] = !state.prefs.collapsedAreas[areaId];
+  saveState();
+  updateAreaWorkStreamList();
+}
+
+function collapseAllAreas() {
+  if (!state.prefs.collapsedAreas) state.prefs.collapsedAreas = {};
+  state.areas.forEach(a => { state.prefs.collapsedAreas[a.id] = true; });
+  state.prefs.collapsedAreas['_unassigned'] = true;
+  saveState();
+  updateAreaWorkStreamList();
+}
+
+function expandAllAreas() {
+  state.prefs.collapsedAreas = {};
   saveState();
   updateAreaWorkStreamList();
 }
