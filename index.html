@@ -135,7 +135,7 @@
 
 /* Week view */
 .cal-week-grid {
-  display:grid; grid-template-columns:repeat(7,1fr);
+  display:grid; grid-template-columns:40px repeat(5,1fr) 40px;
   border:1px solid var(--border); border-radius:var(--radius); overflow:hidden;
   background:var(--border); gap:1px;
 }
@@ -143,6 +143,12 @@
   background:var(--bg-card); min-height:200px; padding:8px;
   cursor:pointer; transition:background 0.15s;
 }
+.cal-week-day.weekend {
+  padding:6px 4px; min-height:100px; opacity:0.6;
+}
+.cal-week-day.weekend .cal-week-header { font-size:9px; }
+.cal-week-day.weekend .cal-week-date { font-size:14px; }
+.cal-week-day.weekend .cal-week-event { display:none; }
 .cal-week-day:hover { background:var(--accent-light); }
 .cal-week-day.today { background:var(--accent-light); }
 .cal-week-day .cal-week-header {
@@ -2615,7 +2621,8 @@ function renderCalWeek(today, filterHtml) {
     const ds = localDateStr(d);
     const isToday = ds === today;
     const events = getCalEvents(ds);
-    html += `<div class="cal-week-day${isToday ? ' today' : ''}" onclick="openCalDayDetail('${ds}')">`;
+    const isWeekend = d.getDay() === 0 || d.getDay() === 6;
+    html += `<div class="cal-week-day${isToday ? ' today' : ''}${isWeekend ? ' weekend' : ''}" onclick="openCalDayDetail('${ds}')">`;
     html += `<div class="cal-week-header">${dayNames[d.getDay()]}</div>`;
     html += `<div class="cal-week-date">${d.getDate()}</div>`;
     events.forEach(ev => {
