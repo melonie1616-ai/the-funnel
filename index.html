@@ -985,8 +985,9 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .links-header button { padding:6px 16px; font-size:13px; }
 .link-group { margin-bottom:24px; }
 .link-group-header {
-  display:flex; align-items:center; justify-content:space-between; padding:8px 0;
-  border-bottom:2px solid var(--border); margin-bottom:10px; cursor:pointer; user-select:none;
+  display:flex; align-items:center; justify-content:space-between; padding:8px 12px;
+  border-radius:var(--radius-sm); margin-bottom:10px; cursor:pointer; user-select:none;
+  background:var(--accent-light); border-left:3px solid var(--accent);
 }
 .link-group-header h3 { font-size:15px; font-weight:700; color:var(--text); margin:0; display:flex; align-items:center; gap:8px; }
 .link-group-header h3::before { content:'▸'; font-size:12px; color:var(--text-muted); transition:transform 0.15s; }
@@ -1279,8 +1280,6 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="sidebar-heading" style="display:flex;align-items:center;justify-content:space-between;">
         Work Streams
         <span style="display:flex;gap:6px;">
-          <button class="sidebar-add-btn" onclick="collapseAllAreas()" style="padding:0;width:auto;font-size:11px;line-height:1;opacity:0.6;" title="Collapse all">&#9660;</button>
-          <button class="sidebar-add-btn" onclick="expandAllAreas()" style="padding:0;width:auto;font-size:11px;line-height:1;opacity:0.6;" title="Expand all">&#9650;</button>
           <button class="sidebar-add-btn" onclick="openAreaModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Manage areas">&#9881;</button>
           <button class="sidebar-add-btn" onclick="openWorkStreamModal()" style="padding:0;width:auto;font-size:14px;line-height:1;" title="Add work stream">&#10010;</button>
         </span>
@@ -2926,7 +2925,7 @@ function updateAreaWorkStreamList() {
     const wsList = getWorkStreamsByArea(area.id).filter(ws => isMyWorkStream(ws));
     const isExpanded = !state.prefs.collapsedAreas[area.id];
     const totalActive = wsList.reduce((sum, ws) => sum + getActiveOccCount(ws.id), 0);
-    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')" style="background:${area.color}22;border-left:3px solid ${area.color};margin:2px 8px;border-radius:4px;padding-left:12px;">
+    html += `<div class="sidebar-area-header ${isExpanded ? 'expanded' : ''}" onclick="toggleAreaCollapse('${area.id}')">
       <span class="area-dot" style="background:${area.color}"></span>
       ${esc(area.name)}
       ${totalActive > 0 ? `<span class="ws-count">(${totalActive})</span>` : ''}
@@ -2980,19 +2979,6 @@ function toggleAreaCollapse(areaId) {
   updateAreaWorkStreamList();
 }
 
-function collapseAllAreas() {
-  if (!state.prefs.collapsedAreas) state.prefs.collapsedAreas = {};
-  state.areas.forEach(a => { state.prefs.collapsedAreas[a.id] = true; });
-  state.prefs.collapsedAreas['_unassigned'] = true;
-  saveState();
-  updateAreaWorkStreamList();
-}
-
-function expandAllAreas() {
-  state.prefs.collapsedAreas = {};
-  saveState();
-  updateAreaWorkStreamList();
-}
 
 // --- Work Stream Modal ---
 function onWsCadenceChange() {
@@ -3865,7 +3851,9 @@ function renderLinksView() {
   let html = `<div class="links-page">
     <div class="links-header">
       <h2>&#128279; Links</h2>
-      <div style="display:flex;gap:8px;">
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-secondary" onclick="collapseAllLinkGroups()" style="padding:4px 10px;font-size:11px;" title="Collapse all">&#9660; Collapse</button>
+        <button class="btn btn-secondary" onclick="expandAllLinkGroups()" style="padding:4px 10px;font-size:11px;" title="Expand all">&#9650; Expand</button>
         <button class="btn btn-secondary" onclick="openLinkGroupModal()">+ Group</button>
         <button class="btn btn-primary" onclick="openLinkModal()">+ Link</button>
       </div>
@@ -4068,6 +4056,20 @@ function saveLinkGroup() {
   saveState();
   closeLinkGroupModal();
   renderLinksView();
+}
+
+function collapseAllLinkGroups() {
+  document.querySelectorAll('.link-group-header.expanded').forEach(el => {
+    el.classList.remove('expanded');
+    if (el.nextElementSibling) el.nextElementSibling.style.display = 'none';
+  });
+}
+
+function expandAllLinkGroups() {
+  document.querySelectorAll('.link-group-header:not(.expanded)').forEach(el => {
+    el.classList.add('expanded');
+    if (el.nextElementSibling) el.nextElementSibling.style.display = '';
+  });
 }
 
 function deleteLinkGroup() {
