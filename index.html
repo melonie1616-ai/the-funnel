@@ -1381,6 +1381,12 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
     <div class="modal-header"><h3 id="linkGroupModalTitle">Add Group</h3><button class="modal-close" onclick="closeLinkGroupModal()">&times;</button></div>
     <div class="modal-body">
       <div class="form-group"><label>Group Name</label><input type="text" id="linkGroupNameInput" placeholder="e.g. Repositories"></div>
+      <div class="form-group"><label>Header Color</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <input type="color" id="linkGroupColorInput" value="#6366f1" style="width:40px;height:34px;padding:2px;border:1px solid var(--border);border-radius:var(--radius-sm);cursor:pointer;">
+          <span style="font-size:12px;color:var(--text-muted);">Choose a background color for the group header</span>
+        </div>
+      </div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-danger" id="deleteLinkGroupBtn" onclick="deleteLinkGroup()" style="margin-right:auto;display:none;">Delete</button>
@@ -3880,8 +3886,9 @@ function renderLinksView() {
     html += `<div class="links-columns">`;
     allGroups.forEach(g => {
       const groupLinks = g._links || state.links.filter(l => l.groupId === g.id);
+      const gColor = g.color || '#6366f1';
       html += `<div class="link-group">
-        <div class="link-group-header expanded" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
+        <div class="link-group-header expanded" style="background:${gColor}18;border-left-color:${gColor};" onclick="this.classList.toggle('expanded');this.nextElementSibling.style.display=this.classList.contains('expanded')?'':'none'">
           <h3>${esc(g.name)} <span style="font-weight:400;color:var(--text-muted);font-size:12px;">(${groupLinks.length})</span></h3>
           ${g.id !== '_ungrouped' ? `<div class="link-group-actions" onclick="event.stopPropagation()">
             <button onclick="openLinkGroupModal('${g.id}')" title="Edit group">&#9998;</button>
@@ -4036,10 +4043,12 @@ function openLinkGroupModal(groupId) {
     if (!g) return;
     titleEl.textContent = 'Edit Group';
     document.getElementById('linkGroupNameInput').value = g.name;
+    document.getElementById('linkGroupColorInput').value = g.color || '#6366f1';
     delBtn.style.display = '';
   } else {
     titleEl.textContent = 'Add Group';
     document.getElementById('linkGroupNameInput').value = '';
+    document.getElementById('linkGroupColorInput').value = '#6366f1';
     delBtn.style.display = 'none';
   }
   modal.style.display = 'flex';
@@ -4056,13 +4065,16 @@ function saveLinkGroup() {
 
   if (!state.linkGroups) state.linkGroups = [];
 
+  const color = document.getElementById('linkGroupColorInput').value;
+
   if (editingLinkGroupId) {
     const g = state.linkGroups.find(x => x.id === editingLinkGroupId);
-    if (g) g.name = name;
+    if (g) { g.name = name; g.color = color; }
   } else {
     state.linkGroups.push({
       id: uuid(),
       name,
+      color,
       order: state.linkGroups.length,
       createdAt: new Date().toISOString()
     });
