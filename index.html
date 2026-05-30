@@ -4232,7 +4232,18 @@ function bootApp() {
   // Clean up any blank occurrences from cancelled ad-hoc creation
   const before = state.occurrences.length;
   state.occurrences = state.occurrences.filter(o => o.title && o.title.trim());
-  if (state.occurrences.length < before) saveState();
+
+  // Shift any weekend occurrences to the following Monday
+  let shifted = 0;
+  state.occurrences.forEach(o => {
+    if (!o.dueDate) return;
+    const d = new Date(o.dueDate + 'T12:00:00');
+    const day = d.getDay();
+    if (day === 0) { d.setDate(d.getDate() + 1); o.dueDate = localDateStr(d); shifted++; }
+    else if (day === 6) { d.setDate(d.getDate() + 2); o.dueDate = localDateStr(d); shifted++; }
+  });
+
+  if (state.occurrences.length < before || shifted > 0) saveState();
 
   seedWorkStreams();
   applyDarkMode();
