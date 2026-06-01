@@ -2743,12 +2743,8 @@ function isMyWorkStream(ws) {
 
 function isMyOccurrence(occ) {
   if (teamScope === 'team') return true;
-  const ws = state.workStreams.find(w => w.id === occ.workStreamId);
-  if (!ws) return true;
-  if (occ.assignee) {
-    return occ.assignee === (currentUser?.email || '');
-  }
-  return ws.owner === 'me' || ws.owner === 'shared';
+  if (!occ.assignee) return false;
+  return occ.assignee === (currentUser?.email || '');
 }
 
 function isMyTask(t) {
