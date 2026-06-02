@@ -996,6 +996,32 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .sync-note-editor .editor-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
 .sync-note-label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
 
+.occ-linked-items { margin-top:4px; }
+.occ-linked-item { display:flex; align-items:center; gap:6px; padding:4px 8px; margin-bottom:4px; border-radius:var(--radius-sm); background:var(--bg); border:1px solid var(--border); font-size:12px; }
+.occ-linked-item .link-type { color:var(--text-muted); font-size:10px; text-transform:uppercase; font-weight:600; min-width:70px; }
+.occ-linked-item .link-title { flex:1; color:var(--text); cursor:pointer; }
+.occ-linked-item .link-title:hover { color:var(--accent); text-decoration:underline; }
+.occ-linked-item .link-remove { cursor:pointer; color:var(--text-muted); font-size:14px; padding:0 4px; }
+.occ-linked-item .link-remove:hover { color:#ef4444; }
+.link-search-wrap { position:relative; }
+.link-search-results { position:absolute; top:100%; left:0; right:0; background:var(--card); border:1px solid var(--border); border-radius:var(--radius-sm); max-height:160px; overflow-y:auto; z-index:10; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+.link-search-results .lsr-item { padding:6px 10px; cursor:pointer; font-size:12px; border-bottom:1px solid var(--border); }
+.link-search-results .lsr-item:hover { background:var(--accent-light); }
+.link-search-results .lsr-item:last-child { border-bottom:none; }
+.lsr-item .lsr-meta { font-size:10px; color:var(--text-muted); }
+
+.occ-comments { margin-top:4px; max-height:200px; overflow-y:auto; }
+.occ-comment { padding:8px 10px; margin-bottom:6px; border-radius:var(--radius-sm); background:var(--bg); border:1px solid var(--border); }
+.occ-comment .comment-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:4px; }
+.occ-comment .comment-author { font-weight:600; font-size:11px; color:var(--accent); }
+.occ-comment .comment-date { font-size:10px; color:var(--text-muted); }
+.occ-comment .comment-text { font-size:12px; line-height:1.5; color:var(--text); white-space:pre-wrap; }
+.occ-comment .comment-delete { cursor:pointer; color:var(--text-muted); font-size:12px; padding:0 4px; }
+.occ-comment .comment-delete:hover { color:#ef4444; }
+.comment-add-row { display:flex; gap:6px; margin-top:6px; }
+.comment-add-row textarea { flex:1; padding:6px 8px; font-size:12px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); font-family:inherit; resize:none; min-height:36px; }
+.comment-add-row button { align-self:flex-end; }
+
 .links-page { padding:24px 28px; }
 .links-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
 .links-header h2 { font-size:20px; font-weight:700; color:var(--text); margin:0; }
@@ -1627,6 +1653,29 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="form-group" id="occChecklistGroup">
         <label>Checklist</label>
         <div id="occChecklistItems"></div>
+      </div>
+      <div class="form-group" id="occLinkedGroup">
+        <label>Dependencies / Linked Items</label>
+        <div class="occ-linked-items" id="occLinkedItems"></div>
+        <div class="link-search-wrap" style="margin-top:6px;">
+          <div style="display:flex;gap:6px;align-items:center;">
+            <select id="occLinkType" style="padding:4px 6px;font-size:11px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);">
+              <option value="depends-on">Depends on</option>
+              <option value="blocks">Blocks</option>
+              <option value="related">Related to</option>
+            </select>
+            <input type="text" id="occLinkSearch" placeholder="Search items to link..." oninput="searchOccLinks(this.value)" onfocus="searchOccLinks(this.value)" style="flex:1;padding:4px 8px;font-size:12px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--bg);color:var(--text);">
+          </div>
+          <div class="link-search-results" id="occLinkResults" style="display:none;"></div>
+        </div>
+      </div>
+      <div class="form-group" id="occCommentsGroup">
+        <label>Comments</label>
+        <div class="occ-comments" id="occCommentsList"></div>
+        <div class="comment-add-row">
+          <textarea id="occCommentInput" placeholder="Add a comment..." rows="1"></textarea>
+          <button class="btn btn-primary" onclick="addOccComment()" style="padding:4px 12px;font-size:12px;">Post</button>
+        </div>
       </div>
     </div>
     <div class="modal-footer">
@@ -3289,6 +3338,8 @@ function renderOccCard(o, today) {
         ${area ? `<span class="area-dot" style="background:${area.color};width:8px;height:8px;display:inline-block;border-radius:50%;"></span><span style="font-size:11px;color:var(--text-muted);">${esc(area.name)}</span>` : ''}
         ${ws ? `<span style="font-size:11px;color:var(--text-muted);">${area ? '&rsaquo; ' : ''}${esc(ws.name)}</span>` : ''}
         ${checkTotal > 0 ? `<span class="occ-progress">&#9745; ${checkDone}/${checkTotal}</span>` : ''}
+        ${(o.linkedItems && o.linkedItems.length > 0) ? `<span style="font-size:11px;color:var(--text-muted);" title="${o.linkedItems.length} linked item(s)">&#128279;${o.linkedItems.length}</span>` : ''}
+        ${(o.comments && o.comments.length > 0) ? `<span style="font-size:11px;color:var(--text-muted);" title="${o.comments.length} comment(s)">&#128172;${o.comments.length}</span>` : ''}
         ${o.assignee ? `<span style="font-size:11px;">${esc(o.assignee.split('@')[0])}</span>` : ''}
       </div>
     </div>
@@ -3587,6 +3638,8 @@ function addAdHocOccurrence(wsId) {
   document.getElementById('occNotesRich').innerHTML = '';
   document.getElementById('occChecklistItems').innerHTML = '';
   document.getElementById('occChecklistGroup').style.display = 'none';
+  renderOccLinkedItems([]);
+  renderOccComments([]);
   modal.style.display = 'flex';
   document.getElementById('occTitleInput').focus();
 }
@@ -3639,6 +3692,9 @@ function openOccurrenceModal(occId) {
     document.getElementById('occChecklistGroup').style.display = 'none';
   }
 
+  renderOccLinkedItems(o.linkedItems || []);
+  renderOccComments(o.comments || []);
+
   modal.style.display = 'flex';
 }
 
@@ -3659,6 +3715,131 @@ function closeOccurrenceModal() {
   else render();
 }
 
+// ===================== LINKED ITEMS =====================
+function renderOccLinkedItems(items) {
+  const el = document.getElementById('occLinkedItems');
+  if (!items || items.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">No linked items yet.</div>';
+    return;
+  }
+  el.innerHTML = items.map(li => {
+    const target = state.occurrences.find(o => o.id === li.targetId);
+    const title = target ? target.title : '(deleted item)';
+    const typeLabels = { 'depends-on': 'Depends on', 'blocks': 'Blocks', 'related': 'Related to' };
+    return `<div class="occ-linked-item">
+      <span class="link-type">${typeLabels[li.type] || li.type}</span>
+      <span class="link-title" onclick="event.stopPropagation();openOccurrenceModal('${li.targetId}')">${esc(title)}</span>
+      <span class="link-remove" onclick="removeOccLink('${li.targetId}')" title="Remove link">&times;</span>
+    </div>`;
+  }).join('');
+}
+
+function searchOccLinks(q) {
+  const resultsEl = document.getElementById('occLinkResults');
+  if (!q || q.length < 1) { resultsEl.style.display = 'none'; return; }
+  const lower = q.toLowerCase();
+  const current = editingOccId;
+  const o = state.occurrences.find(x => x.id === current);
+  const existingIds = new Set((o?.linkedItems || []).map(li => li.targetId));
+  existingIds.add(current);
+
+  const matches = state.occurrences.filter(oc =>
+    !existingIds.has(oc.id) && oc.title && oc.title.toLowerCase().includes(lower)
+  ).slice(0, 8);
+
+  if (matches.length === 0) { resultsEl.style.display = 'none'; return; }
+
+  resultsEl.innerHTML = matches.map(m => {
+    const ws = state.workStreams.find(w => w.id === m.workStreamId);
+    const area = ws ? getAreaById(ws.areaId) : null;
+    const meta = [area?.name, ws?.name].filter(Boolean).join(' > ');
+    return `<div class="lsr-item" onclick="addOccLink('${m.id}')">
+      <div>${esc(m.title)}</div>
+      ${meta ? `<div class="lsr-meta">${esc(meta)}</div>` : ''}
+    </div>`;
+  }).join('');
+  resultsEl.style.display = '';
+}
+
+function addOccLink(targetId) {
+  const o = state.occurrences.find(x => x.id === editingOccId);
+  if (!o) return;
+  if (!o.linkedItems) o.linkedItems = [];
+  const type = document.getElementById('occLinkType').value;
+  if (o.linkedItems.find(li => li.targetId === targetId)) return;
+  o.linkedItems.push({ targetId, type });
+  renderOccLinkedItems(o.linkedItems);
+  document.getElementById('occLinkSearch').value = '';
+  document.getElementById('occLinkResults').style.display = 'none';
+  saveState();
+}
+
+function removeOccLink(targetId) {
+  const o = state.occurrences.find(x => x.id === editingOccId);
+  if (!o || !o.linkedItems) return;
+  o.linkedItems = o.linkedItems.filter(li => li.targetId !== targetId);
+  renderOccLinkedItems(o.linkedItems);
+  saveState();
+}
+
+document.addEventListener('click', function(e) {
+  const wrap = document.querySelector('.link-search-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    document.getElementById('occLinkResults').style.display = 'none';
+  }
+});
+
+// ===================== OCC COMMENTS =====================
+function renderOccComments(comments) {
+  const el = document.getElementById('occCommentsList');
+  if (!comments || comments.length === 0) {
+    el.innerHTML = '<div style="font-size:11px;color:var(--text-muted);padding:4px 0;">No comments yet.</div>';
+    return;
+  }
+  el.innerHTML = comments.map(c => {
+    const dt = new Date(c.timestamp);
+    const timeStr = dt.toLocaleDateString('en-US', { month:'short', day:'numeric' }) + ' ' + dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    const canDelete = c.author === (currentUser?.email || '');
+    return `<div class="occ-comment">
+      <div class="comment-header">
+        <span class="comment-author">${esc((c.author || '').split('@')[0])}</span>
+        <span style="display:flex;align-items:center;gap:4px;">
+          <span class="comment-date">${timeStr}</span>
+          ${canDelete ? `<span class="comment-delete" onclick="deleteOccComment('${c.id}')" title="Delete">&times;</span>` : ''}
+        </span>
+      </div>
+      <div class="comment-text">${esc(c.text)}</div>
+    </div>`;
+  }).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+function addOccComment() {
+  const input = document.getElementById('occCommentInput');
+  const text = (input?.value || '').trim();
+  if (!text) return;
+  const o = state.occurrences.find(x => x.id === editingOccId);
+  if (!o) return;
+  if (!o.comments) o.comments = [];
+  o.comments.push({
+    id: uuid(),
+    author: currentUser?.email || 'unknown',
+    text: text,
+    timestamp: new Date().toISOString()
+  });
+  input.value = '';
+  renderOccComments(o.comments);
+  saveState();
+}
+
+function deleteOccComment(commentId) {
+  const o = state.occurrences.find(x => x.id === editingOccId);
+  if (!o || !o.comments) return;
+  o.comments = o.comments.filter(c => c.id !== commentId);
+  renderOccComments(o.comments);
+  saveState();
+}
+
 function saveOccurrence() {
   if (!editingOccId) return;
   const o = state.occurrences.find(x => x.id === editingOccId);
@@ -3671,6 +3852,8 @@ function saveOccurrence() {
   o.notes = document.getElementById('occNotesRich').innerHTML;
   if (o.status === 'done' && !o.completedAt) o.completedAt = new Date().toISOString();
   if (o.status !== 'done') o.completedAt = null;
+  if (!o.linkedItems) o.linkedItems = [];
+  if (!o.comments) o.comments = [];
   saveState();
   closeOccurrenceModal();
   render();
