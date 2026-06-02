@@ -1891,6 +1891,7 @@ async function loadState() {
       state.occurrences = data.occurrences || [];
       state.links = data.links || [];
       state.linkGroups = data.linkGroups || [];
+      state.syncNotes = data.syncNotes || [];
       state.settings = { ...state.settings, ...(data.settings || {}) };
       state.prefs = { ...state.prefs, ...(data.prefs || {}) };
     }
@@ -1943,6 +1944,7 @@ function listenForChanges() {
           state.occurrences = data.occurrences || [];
           state.links = data.links || [];
           state.linkGroups = data.linkGroups || [];
+          state.syncNotes = data.syncNotes || [];
           state.settings = { ...state.settings, ...(data.settings || {}) };
           render();
         }
