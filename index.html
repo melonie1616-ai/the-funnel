@@ -978,6 +978,23 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 :root.dark-mode .sticky-note textarea::placeholder { color:#fde68a; }
 
 /* Links page */
+.sync-notes-page { padding:24px 28px; }
+.sync-notes-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.sync-notes-header h2 { font-size:20px; font-weight:700; color:var(--text); margin:0; }
+.sync-note-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:16px; }
+.sync-note-card .note-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
+.sync-note-card .note-meta .note-date { font-weight:600; font-size:14px; color:var(--text); }
+.sync-note-card .note-meta .note-author { font-size:12px; color:var(--text-muted); }
+.sync-note-card .note-body { font-size:13px; line-height:1.6; color:var(--text); white-space:pre-wrap; }
+.sync-note-card .note-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+.sync-note-card .note-actions button { padding:4px 10px; font-size:11px; cursor:pointer; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); color:var(--text-muted); }
+.sync-note-card .note-actions button:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
+.sync-note-card .note-actions button.delete-btn:hover { background:#ef4444; border-color:#ef4444; color:#fff; }
+.sync-note-editor { background:var(--card); border:1px solid var(--accent); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; }
+.sync-note-editor textarea { width:100%; min-height:150px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; font-size:13px; line-height:1.6; font-family:inherit; background:var(--bg); color:var(--text); resize:vertical; box-sizing:border-box; }
+.sync-note-editor .editor-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+.sync-note-label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
+
 .links-page { padding:24px 28px; }
 .links-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
 .links-header h2 { font-size:20px; font-weight:700; color:var(--text); margin:0; }
@@ -1267,6 +1284,7 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <div class="sidebar-heading">Views</div>
       <div class="sidebar-item" data-view="calendar" onclick="switchView('calendar')">&#128197; Calendar</div>
       <div class="sidebar-item" data-view="links" onclick="switchView('links')">&#128279; Links</div>
+      <div class="sidebar-item" data-view="syncnotes" onclick="switchView('syncnotes')">&#128221; Sync Notes</div>
       <div class="sidebar-item active" data-view="all" onclick="switchView('all')">&#128203; All Active <span class="count" id="countAll">0</span></div>
       <div class="sidebar-item" data-view="today" onclick="switchView('today')">&#9728; Due Today <span class="count" id="countToday">0</span></div>
       <div class="sidebar-item" data-view="tomorrow" onclick="switchView('tomorrow')">&#127749; Due Tomorrow <span class="count" id="countTomorrow">0</span></div>
@@ -1783,6 +1801,7 @@ const DEFAULT_STATE = {
   occurrences: [],
   links: [],
   linkGroups: [],
+  syncNotes: [],
   settings: {
     apiUrl: 'https://api.openai.com/v1/chat/completions',
     apiKey: '',
@@ -1849,6 +1868,7 @@ async function _saveToFirestore() {
       occurrences: state.occurrences,
       links: state.links || [],
       linkGroups: state.linkGroups || [],
+      syncNotes: state.syncNotes || [],
       settings: state.settings,
       prefs: state.prefs,
       lastUpdatedBy: currentUser.email,
@@ -2091,6 +2111,11 @@ function render() {
     if (view === 'links') {
       currentWsView = null;
       renderLinksView();
+      return;
+    }
+    if (view === 'syncnotes') {
+      currentWsView = null;
+      renderSyncNotesView();
       return;
     }
     if (view.startsWith('workstream:')) {
@@ -3846,6 +3871,135 @@ function esc(str) {
   const div = document.createElement('div');
   div.textContent = str;
   return div.innerHTML;
+}
+
+// ===================== SYNC NOTES =====================
+const MAX_SYNC_NOTES = 5;
+let syncNoteEditing = false;
+
+function renderSyncNotesView() {
+  currentWsView = null;
+  document.getElementById('toolbar').style.display = 'none';
+  const container = document.getElementById('taskListContainer');
+  if (!state.syncNotes) state.syncNotes = [];
+
+  const notes = state.syncNotes.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+
+  let html = `<div class="sync-notes-page">
+    <div class="sync-notes-header">
+      <h2>&#128221; Sync Notes</h2>
+      <button class="btn btn-primary" onclick="startNewSyncNote()">+ New Entry</button>
+    </div>
+    <div id="syncNoteEditorSlot"></div>`;
+
+  if (notes.length === 0) {
+    html += `<div class="empty-state" style="text-align:center;padding:60px 20px;">
+      <p style="font-size:15px;color:var(--text-muted);">No sync notes yet. Click <strong>+ New Entry</strong> to add your first set of notes.</p>
+    </div>`;
+  }
+
+  notes.forEach(n => {
+    const dt = new Date(n.date);
+    const formatted = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    html += `<div class="sync-note-card" id="sync-card-${n.id}">
+      <div class="note-meta">
+        <span class="note-date">${esc(n.title || formatted)}</span>
+        <span class="note-author">${esc(n.author || 'Unknown')} &middot; ${formatted}</span>
+      </div>
+      <div class="note-body">${esc(n.body)}</div>
+      <div class="note-actions">
+        <button onclick="editSyncNote('${n.id}')">&#9998; Edit</button>
+        <button class="delete-btn" onclick="deleteSyncNote('${n.id}')">&#128465; Delete</button>
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  container.innerHTML = html;
+}
+
+function startNewSyncNote() {
+  const slot = document.getElementById('syncNoteEditorSlot');
+  if (!slot) return;
+  const today = localDateStr(new Date());
+  slot.innerHTML = `<div class="sync-note-editor">
+    <label class="sync-note-label">Title (optional)</label>
+    <input type="text" id="syncNoteTitle" placeholder="e.g. Weekly Sync ${today}" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;background:var(--bg);color:var(--text);box-sizing:border-box;">
+    <label class="sync-note-label">Notes</label>
+    <textarea id="syncNoteBody" placeholder="Type your sync notes here..."></textarea>
+    <div class="editor-actions">
+      <button class="btn btn-secondary" onclick="cancelSyncNote()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSyncNote()">Save</button>
+    </div>
+  </div>`;
+  document.getElementById('syncNoteBody').focus();
+  syncNoteEditing = true;
+}
+
+function editSyncNote(id) {
+  if (!state.syncNotes) return;
+  const note = state.syncNotes.find(n => n.id === id);
+  if (!note) return;
+  const slot = document.getElementById('syncNoteEditorSlot');
+  if (!slot) return;
+  slot.innerHTML = `<div class="sync-note-editor">
+    <label class="sync-note-label">Title (optional)</label>
+    <input type="text" id="syncNoteTitle" value="${esc(note.title || '')}" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;background:var(--bg);color:var(--text);box-sizing:border-box;">
+    <label class="sync-note-label">Notes</label>
+    <textarea id="syncNoteBody">${esc(note.body || '')}</textarea>
+    <div class="editor-actions">
+      <button class="btn btn-secondary" onclick="cancelSyncNote()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveSyncNote('${id}')">Save</button>
+    </div>
+  </div>`;
+  document.getElementById('syncNoteBody').focus();
+  syncNoteEditing = true;
+}
+
+function cancelSyncNote() {
+  const slot = document.getElementById('syncNoteEditorSlot');
+  if (slot) slot.innerHTML = '';
+  syncNoteEditing = false;
+}
+
+function saveSyncNote(existingId) {
+  if (!state.syncNotes) state.syncNotes = [];
+  const title = (document.getElementById('syncNoteTitle')?.value || '').trim();
+  const body = (document.getElementById('syncNoteBody')?.value || '').trim();
+  if (!body) { alert('Please enter some notes before saving.'); return; }
+
+  if (existingId) {
+    const note = state.syncNotes.find(n => n.id === existingId);
+    if (note) {
+      note.title = title;
+      note.body = body;
+      note.lastEditedBy = currentUser?.email || 'unknown';
+      note.lastEditedAt = new Date().toISOString();
+    }
+  } else {
+    const newNote = {
+      id: uuid(),
+      title: title,
+      body: body,
+      date: new Date().toISOString(),
+      author: currentUser?.email || 'unknown'
+    };
+    state.syncNotes.unshift(newNote);
+    if (state.syncNotes.length > MAX_SYNC_NOTES) {
+      state.syncNotes = state.syncNotes.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, MAX_SYNC_NOTES);
+    }
+  }
+
+  saveState();
+  syncNoteEditing = false;
+  renderSyncNotesView();
+}
+
+function deleteSyncNote(id) {
+  if (!confirm('Delete this sync note?')) return;
+  state.syncNotes = (state.syncNotes || []).filter(n => n.id !== id);
+  saveState();
+  renderSyncNotesView();
 }
 
 // ===================== LINKS PAGE =====================
