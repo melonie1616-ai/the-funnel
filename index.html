@@ -448,6 +448,7 @@
 .team-toggle button:hover:not(.active) {
   color:rgba(255,255,255,0.85);
 }
+#memberFilter option { background:var(--card); color:var(--text); }
 
 * { margin:0; padding:0; box-sizing:border-box; }
 body {
@@ -1260,6 +1261,9 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
       <button onclick="setTeamScope('mine')" id="btnScopeMine">My Work</button>
       <button class="active" onclick="setTeamScope('team')" id="btnScopeTeam">Team</button>
     </div>
+    <select id="memberFilter" onchange="setMemberFilter(this.value)" title="Filter by team member" style="display:none;padding:3px 6px;font-size:11px;border-radius:var(--radius-sm);border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.1);color:#fff;cursor:pointer;margin-right:4px;">
+      <option value="">Everyone</option>
+    </select>
     <span id="currentUserLabel"></span>
     <button id="darkModeBtn" onclick="toggleDarkMode()" title="Toggle Dark Mode" style="font-size:14px;padding:4px 8px;">&#127763;</button>
     <button onclick="openSettings()" title="Settings" style="font-size:14px;padding:4px 8px;">&#9881;</button>
@@ -2096,6 +2100,7 @@ function render() {
   updateToolbar();
   updateFilterChips();
   updateAreaWorkStreamList();
+  if (teamScope === 'team') populateMemberFilter();
 
   const container = document.getElementById('taskListContainer');
   const view = state.prefs.currentView;
@@ -2754,27 +2759,66 @@ function toggleCalShowDone() {
 }
 
 // ===================== TEAM SCOPE =====================
+let memberFilterEmail = '';
+
 function setTeamScope(scope) {
   teamScope = scope;
   document.getElementById('btnScopeMine').classList.toggle('active', scope === 'mine');
   document.getElementById('btnScopeTeam').classList.toggle('active', scope === 'team');
+  const mf = document.getElementById('memberFilter');
+  if (scope === 'team') {
+    populateMemberFilter();
+    mf.style.display = '';
+  } else {
+    mf.style.display = 'none';
+    memberFilterEmail = '';
+    mf.value = '';
+  }
+  render();
+}
+
+function populateMemberFilter() {
+  const mf = document.getElementById('memberFilter');
+  const prev = mf.value;
+  const emails = new Set();
+  if (currentUser?.email) emails.add(currentUser.email);
+  state.occurrences.forEach(oc => { if (oc.assignee) emails.add(oc.assignee); });
+  state.tasks.forEach(t => { if (t.assignee) emails.add(t.assignee); });
+  const sorted = [...emails].sort();
+  mf.innerHTML = '<option value="">Everyone</option>';
+  sorted.forEach(email => {
+    const label = email.split('@')[0];
+    mf.innerHTML += `<option value="${esc(email)}">${esc(label)}</option>`;
+  });
+  mf.value = prev || '';
+}
+
+function setMemberFilter(email) {
+  memberFilterEmail = email;
   render();
 }
 
 function isMyWorkStream(ws) {
-  if (teamScope === 'team') return true;
+  if (teamScope === 'team' && !memberFilterEmail) return true;
+  if (teamScope === 'team' && memberFilterEmail) return true;
   return ws.owner === 'me' || ws.owner === 'shared';
 }
 
 function isMyOccurrence(occ) {
-  if (teamScope === 'team') return true;
+  if (teamScope === 'team' && !memberFilterEmail) return true;
+  if (teamScope === 'team' && memberFilterEmail) {
+    return occ.assignee === memberFilterEmail;
+  }
   if (!occ.assignee) return false;
   return occ.assignee === (currentUser?.email || '');
 }
 
 function isMyTask(t) {
-  if (teamScope === 'team') return true;
-  return true; // legacy tasks are always "mine"
+  if (teamScope === 'team' && !memberFilterEmail) return true;
+  if (teamScope === 'team' && memberFilterEmail) {
+    return (t.assignee || '') === memberFilterEmail;
+  }
+  return true;
 }
 
 // Day detail panel
