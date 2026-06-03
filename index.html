@@ -980,21 +980,35 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 /* Links page */
 .sync-notes-page { padding:24px 28px; }
-.sync-notes-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:20px; }
+.sync-notes-header { display:flex; align-items:center; justify-content:space-between; margin-bottom:16px; flex-wrap:wrap; gap:8px; }
 .sync-notes-header h2 { font-size:20px; font-weight:700; color:var(--text); margin:0; }
-.sync-note-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:16px 20px; margin-bottom:16px; }
-.sync-note-card .note-meta { display:flex; align-items:center; justify-content:space-between; margin-bottom:10px; }
-.sync-note-card .note-meta .note-date { font-weight:600; font-size:14px; color:var(--text); }
-.sync-note-card .note-meta .note-author { font-size:12px; color:var(--text-muted); }
-.sync-note-card .note-body { font-size:13px; line-height:1.6; color:var(--text); white-space:pre-wrap; }
-.sync-note-card .note-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+.sync-notes-toolbar { display:flex; gap:8px; align-items:center; }
+.sync-note-card { background:var(--card); border:1px solid var(--border); border-radius:var(--radius); margin-bottom:10px; overflow:hidden; }
+.sync-note-card.pinned { border-left:3px solid var(--accent); }
+.sync-note-card.expiring { border-left:3px solid #f59e0b; }
+.sync-note-head { display:flex; align-items:center; justify-content:space-between; padding:12px 16px; cursor:pointer; user-select:none; }
+.sync-note-head:hover { background:var(--accent-light); }
+.sync-note-head .note-date { font-weight:600; font-size:13px; color:var(--text); display:flex; align-items:center; gap:8px; }
+.sync-note-head .note-right { display:flex; align-items:center; gap:8px; font-size:11px; color:var(--text-muted); }
+.sync-note-head .note-badge { display:inline-block; padding:1px 6px; border-radius:10px; font-size:9px; font-weight:700; text-transform:uppercase; }
+.sync-note-head .badge-keep { background:var(--accent); color:#fff; }
+.sync-note-head .badge-temp { background:#f59e0b; color:#fff; }
+.sync-note-head .chevron { font-size:12px; transition:transform 0.2s; }
+.sync-note-head.collapsed .chevron { transform:rotate(-90deg); }
+.sync-note-body-wrap { padding:0 16px 14px; }
+.sync-note-body-wrap.hidden { display:none; }
+.sync-note-card .note-body { font-size:13px; line-height:1.6; color:var(--text); white-space:pre-wrap; margin-bottom:10px; }
+.sync-note-card .note-author { font-size:11px; color:var(--text-muted); margin-bottom:8px; }
+.sync-note-card .note-actions { display:flex; gap:8px; justify-content:flex-end; }
 .sync-note-card .note-actions button { padding:4px 10px; font-size:11px; cursor:pointer; border-radius:var(--radius-sm); border:1px solid var(--border); background:var(--bg); color:var(--text-muted); }
 .sync-note-card .note-actions button:hover { background:var(--accent); color:#fff; border-color:var(--accent); }
 .sync-note-card .note-actions button.delete-btn:hover { background:#ef4444; border-color:#ef4444; color:#fff; }
 .sync-note-editor { background:var(--card); border:1px solid var(--accent); border-radius:var(--radius); padding:16px 20px; margin-bottom:20px; }
 .sync-note-editor textarea { width:100%; min-height:150px; border:1px solid var(--border); border-radius:var(--radius-sm); padding:10px; font-size:13px; line-height:1.6; font-family:inherit; background:var(--bg); color:var(--text); resize:vertical; box-sizing:border-box; }
-.sync-note-editor .editor-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; }
+.sync-note-editor .editor-actions { display:flex; gap:8px; margin-top:10px; justify-content:flex-end; align-items:center; }
 .sync-note-label { display:block; font-size:12px; font-weight:600; color:var(--text-muted); margin-bottom:6px; }
+.sync-note-editor .keep-toggle { display:flex; align-items:center; gap:6px; font-size:12px; color:var(--text-muted); margin-right:auto; }
+.sync-note-editor .keep-toggle select { padding:2px 6px; font-size:11px; border:1px solid var(--border); border-radius:var(--radius-sm); background:var(--bg); color:var(--text); }
 
 .occ-linked-items { margin-top:4px; }
 .occ-linked-item { display:flex; align-items:center; gap:6px; padding:4px 8px; margin-bottom:4px; border-radius:var(--radius-sm); background:var(--bg); border:1px solid var(--border); font-size:12px; }
@@ -4103,21 +4117,38 @@ function esc(str) {
 }
 
 // ===================== SYNC NOTES =====================
-const MAX_SYNC_NOTES = 5;
 let syncNoteEditing = false;
+let syncNotesCollapsed = {};
+
+function purgeSyncNotes() {
+  if (!state.syncNotes) return;
+  const now = Date.now();
+  const FIVE_DAYS = 5 * 24 * 60 * 60 * 1000;
+  const before = state.syncNotes.length;
+  state.syncNotes = state.syncNotes.filter(n => {
+    if (n.keep !== false) return true;
+    return (now - new Date(n.date).getTime()) < FIVE_DAYS;
+  });
+  if (state.syncNotes.length < before) saveState();
+}
 
 function renderSyncNotesView() {
   currentWsView = null;
   document.getElementById('toolbar').style.display = 'none';
   const container = document.getElementById('taskListContainer');
   if (!state.syncNotes) state.syncNotes = [];
+  purgeSyncNotes();
 
   const notes = state.syncNotes.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
 
   let html = `<div class="sync-notes-page">
     <div class="sync-notes-header">
-      <h2>&#128221; Sync Notes</h2>
-      <button class="btn btn-primary" onclick="startNewSyncNote()">+ New Entry</button>
+      <h2>&#128221; Sync Notes <span style="font-size:13px;font-weight:400;color:var(--text-muted);">(${notes.length})</span></h2>
+      <div class="sync-notes-toolbar">
+        <button class="btn btn-secondary" onclick="collapseAllSyncNotes()" style="padding:4px 10px;font-size:11px;">&#9660; Collapse All</button>
+        <button class="btn btn-secondary" onclick="expandAllSyncNotes()" style="padding:4px 10px;font-size:11px;">&#9650; Expand All</button>
+        <button class="btn btn-primary" onclick="startNewSyncNote()">+ New Entry</button>
+      </div>
     </div>
     <div id="syncNoteEditorSlot"></div>`;
 
@@ -4130,21 +4161,68 @@ function renderSyncNotesView() {
   notes.forEach(n => {
     const dt = new Date(n.date);
     const formatted = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
-    html += `<div class="sync-note-card" id="sync-card-${n.id}">
-      <div class="note-meta">
-        <span class="note-date">${esc(n.title || formatted)}</span>
-        <span class="note-author">${esc(n.author || 'Unknown')} &middot; ${formatted}</span>
+    const isPermanent = n.keep !== false;
+    const cls = isPermanent ? 'pinned' : 'expiring';
+    const badge = isPermanent
+      ? '<span class="note-badge badge-keep">Saved</span>'
+      : '<span class="note-badge badge-temp">Auto-delete</span>';
+    const isCollapsed = syncNotesCollapsed[n.id];
+    const headCls = isCollapsed ? 'collapsed' : '';
+    const bodyCls = isCollapsed ? 'hidden' : '';
+    const authorLabel = (n.author || 'Unknown').split('@')[0];
+    const daysAgo = Math.floor((Date.now() - dt.getTime()) / (1000*60*60*24));
+    const agoStr = daysAgo === 0 ? 'today' : daysAgo === 1 ? 'yesterday' : `${daysAgo}d ago`;
+
+    html += `<div class="sync-note-card ${cls}" id="sync-card-${n.id}">
+      <div class="sync-note-head ${headCls}" onclick="toggleSyncNote('${n.id}')">
+        <span class="note-date">
+          <span class="chevron">&#9660;</span>
+          ${esc(n.title || formatted)}
+        </span>
+        <span class="note-right">
+          ${badge}
+          <span>${esc(authorLabel)} &middot; ${agoStr}</span>
+        </span>
       </div>
-      <div class="note-body">${esc(n.body)}</div>
-      <div class="note-actions">
-        <button onclick="editSyncNote('${n.id}')">&#9998; Edit</button>
-        <button class="delete-btn" onclick="deleteSyncNote('${n.id}')">&#128465; Delete</button>
+      <div class="sync-note-body-wrap ${bodyCls}" id="sync-body-${n.id}">
+        <div class="note-body">${esc(n.body)}</div>
+        <div class="note-actions">
+          <button onclick="toggleSyncNoteKeep('${n.id}')" title="${isPermanent ? 'Switch to auto-delete after 5 days' : 'Keep permanently'}">${isPermanent ? '&#9203; Set Auto-delete' : '&#128204; Keep Permanently'}</button>
+          <button onclick="editSyncNote('${n.id}')">&#9998; Edit</button>
+          <button class="delete-btn" onclick="deleteSyncNote('${n.id}')">&#128465; Delete</button>
+        </div>
       </div>
     </div>`;
   });
 
   html += `</div>`;
   container.innerHTML = html;
+}
+
+function toggleSyncNote(id) {
+  syncNotesCollapsed[id] = !syncNotesCollapsed[id];
+  const head = document.querySelector(`#sync-card-${id} .sync-note-head`);
+  const body = document.getElementById(`sync-body-${id}`);
+  if (head) head.classList.toggle('collapsed');
+  if (body) body.classList.toggle('hidden');
+}
+
+function collapseAllSyncNotes() {
+  (state.syncNotes || []).forEach(n => { syncNotesCollapsed[n.id] = true; });
+  renderSyncNotesView();
+}
+
+function expandAllSyncNotes() {
+  syncNotesCollapsed = {};
+  renderSyncNotesView();
+}
+
+function toggleSyncNoteKeep(id) {
+  const note = (state.syncNotes || []).find(n => n.id === id);
+  if (!note) return;
+  note.keep = (note.keep === false) ? true : false;
+  saveState();
+  renderSyncNotesView();
 }
 
 function startNewSyncNote() {
@@ -4157,6 +4235,13 @@ function startNewSyncNote() {
     <label class="sync-note-label">Notes</label>
     <textarea id="syncNoteBody" placeholder="Type your sync notes here..."></textarea>
     <div class="editor-actions">
+      <div class="keep-toggle">
+        <label for="syncNoteKeep">Retention:</label>
+        <select id="syncNoteKeep">
+          <option value="keep" selected>Keep permanently</option>
+          <option value="temp">Auto-delete after 5 days</option>
+        </select>
+      </div>
       <button class="btn btn-secondary" onclick="cancelSyncNote()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSyncNote()">Save</button>
     </div>
@@ -4171,12 +4256,20 @@ function editSyncNote(id) {
   if (!note) return;
   const slot = document.getElementById('syncNoteEditorSlot');
   if (!slot) return;
+  const keepVal = note.keep === false ? 'temp' : 'keep';
   slot.innerHTML = `<div class="sync-note-editor">
     <label class="sync-note-label">Title (optional)</label>
     <input type="text" id="syncNoteTitle" value="${esc(note.title || '')}" style="width:100%;padding:8px 10px;font-size:13px;border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:10px;background:var(--bg);color:var(--text);box-sizing:border-box;">
     <label class="sync-note-label">Notes</label>
     <textarea id="syncNoteBody">${esc(note.body || '')}</textarea>
     <div class="editor-actions">
+      <div class="keep-toggle">
+        <label for="syncNoteKeep">Retention:</label>
+        <select id="syncNoteKeep">
+          <option value="keep" ${keepVal === 'keep' ? 'selected' : ''}>Keep permanently</option>
+          <option value="temp" ${keepVal === 'temp' ? 'selected' : ''}>Auto-delete after 5 days</option>
+        </select>
+      </div>
       <button class="btn btn-secondary" onclick="cancelSyncNote()">Cancel</button>
       <button class="btn btn-primary" onclick="saveSyncNote('${id}')">Save</button>
     </div>
@@ -4196,27 +4289,27 @@ function saveSyncNote(existingId) {
   const title = (document.getElementById('syncNoteTitle')?.value || '').trim();
   const body = (document.getElementById('syncNoteBody')?.value || '').trim();
   if (!body) { alert('Please enter some notes before saving.'); return; }
+  const keepVal = document.getElementById('syncNoteKeep')?.value;
+  const keep = keepVal !== 'temp';
 
   if (existingId) {
     const note = state.syncNotes.find(n => n.id === existingId);
     if (note) {
       note.title = title;
       note.body = body;
+      note.keep = keep;
       note.lastEditedBy = currentUser?.email || 'unknown';
       note.lastEditedAt = new Date().toISOString();
     }
   } else {
-    const newNote = {
+    state.syncNotes.unshift({
       id: uuid(),
       title: title,
       body: body,
+      keep: keep,
       date: new Date().toISOString(),
       author: currentUser?.email || 'unknown'
-    };
-    state.syncNotes.unshift(newNote);
-    if (state.syncNotes.length > MAX_SYNC_NOTES) {
-      state.syncNotes = state.syncNotes.sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, MAX_SYNC_NOTES);
-    }
+    });
   }
 
   saveState();
