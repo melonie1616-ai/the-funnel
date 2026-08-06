@@ -926,12 +926,13 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 /* Sticky note */
 .sticky-note {
-  position:fixed; bottom:24px; right:24px; width:320px; min-width:240px; min-height:180px;
+  position:fixed; bottom:24px; right:24px; width:380px; min-width:280px; min-height:180px;
+  max-width:calc(100vw - 48px); max-height:calc(100vh - 48px);
   background:#fffde7; border:1px solid #f6d365; border-radius:8px;
   box-shadow:0 4px 16px rgba(0,0,0,0.15); z-index:900;
   display:flex; flex-direction:column; font-family:inherit;
   transition:opacity 0.2s, transform 0.2s;
-  resize:both; overflow:hidden;
+  resize:both; overflow:auto;
 }
 .sticky-note.hidden { opacity:0; pointer-events:none; transform:translateY(20px); }
 .sticky-header {
@@ -4818,6 +4819,25 @@ function initStickyNote() {
     note.style.top = state.prefs[posKey].y + 'px';
     note.style.right = 'auto';
     note.style.bottom = 'auto';
+  }
+
+  const desktopLayout = window.matchMedia('(min-width: 769px)');
+  const sizeKey = stickyKey('size');
+  if (desktopLayout.matches && state.prefs[sizeKey]) {
+    note.style.width = state.prefs[sizeKey].width + 'px';
+    note.style.height = state.prefs[sizeKey].height + 'px';
+  }
+  if (window.ResizeObserver) {
+    let resizeTimer = null;
+    new ResizeObserver(() => {
+      if (!desktopLayout.matches) return;
+      clearTimeout(resizeTimer);
+      resizeTimer = setTimeout(() => {
+        const rect = note.getBoundingClientRect();
+        state.prefs[sizeKey] = { width: Math.round(rect.width), height: Math.round(rect.height) };
+        saveState();
+      }, 300);
+    }).observe(note);
   }
 
   // Draggable
