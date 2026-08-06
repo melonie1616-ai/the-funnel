@@ -926,12 +926,12 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 
 /* Sticky note */
 .sticky-note {
-  position:fixed; bottom:24px; right:24px; width:280px; min-width:200px; min-height:120px;
+  position:fixed; bottom:24px; right:24px; width:320px; min-width:240px; min-height:180px;
   background:#fef9c3; border:1px solid #f59e0b; border-radius:8px;
   box-shadow:0 4px 16px rgba(0,0,0,0.15); z-index:900;
   display:flex; flex-direction:column; font-family:inherit;
   transition:opacity 0.2s, transform 0.2s;
-  resize:both; overflow:auto;
+  resize:both; overflow:hidden;
 }
 .sticky-note.hidden { opacity:0; pointer-events:none; transform:translateY(20px); }
 .sticky-header {
@@ -943,17 +943,56 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 .sticky-title { font-size:12px; font-weight:700; color:#92400e; }
 .sticky-actions { display:flex; gap:2px; }
 .sticky-actions button {
-  background:none; border:none; cursor:pointer; font-size:14px;
+  background:none; border:none; cursor:pointer; font-size:13px;
   color:#92400e; padding:0 4px; border-radius:3px;
 }
 .sticky-actions button:hover { background:rgba(0,0,0,0.08); }
-.sticky-note textarea {
-  border:none; background:transparent; resize:none; flex:1;
-  padding:8px 10px; font-size:13px; line-height:1.5; font-family:inherit;
-  color:#451a03; outline:none;
-  min-height:60px; overflow-y:auto;
+.sticky-fmt {
+  display:flex; gap:1px; padding:3px 8px; border-bottom:1px solid rgba(245,158,11,0.3); flex-shrink:0;
 }
-.sticky-note textarea::placeholder { color:#b45309; opacity:0.5; }
+.sticky-fmt button {
+  background:none; border:none; cursor:pointer; font-size:12px; color:#92400e;
+  padding:2px 5px; border-radius:3px; line-height:1;
+}
+.sticky-fmt button:hover { background:rgba(0,0,0,0.08); }
+.sticky-editor {
+  flex:1; min-height:80px; overflow-y:auto; padding:8px 10px;
+  font-size:13px; line-height:1.6; color:#451a03; outline:none;
+  font-family:inherit;
+}
+.sticky-editor:empty::before {
+  content:attr(data-placeholder); color:#b45309; opacity:0.5; pointer-events:none;
+}
+.sticky-editor ol, .sticky-editor ul { margin:0 0 0 18px; padding:0; }
+.sticky-editor li { margin-bottom:2px; }
+.sticky-footer {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:4px 8px; border-top:1px solid rgba(245,158,11,0.3); flex-shrink:0;
+  font-size:10px; color:#92400e;
+}
+.sticky-footer button {
+  background:none; border:1px solid #f59e0b; cursor:pointer; font-size:10px;
+  color:#92400e; padding:2px 8px; border-radius:4px; font-weight:600;
+}
+.sticky-footer button:hover { background:#fde68a; }
+.sticky-history-panel {
+  position:absolute; top:0; left:0; right:0; bottom:0; background:#fef9c3;
+  z-index:2; display:flex; flex-direction:column; border-radius:8px; overflow:hidden;
+}
+.sticky-history-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:8px 10px; background:#fde68a; border-bottom:1px solid #f59e0b;
+  font-size:12px; font-weight:700; color:#92400e; flex-shrink:0;
+}
+.sticky-history-header button { background:none; border:none; cursor:pointer; color:#92400e; font-size:14px; }
+.sticky-history-list { flex:1; overflow-y:auto; padding:6px; }
+.sticky-history-item {
+  padding:8px; margin-bottom:6px; border:1px solid rgba(245,158,11,0.3);
+  border-radius:6px; cursor:pointer; font-size:11px;
+}
+.sticky-history-item:hover { background:#fde68a; }
+.sticky-history-item .sh-date { font-weight:600; color:#92400e; margin-bottom:4px; }
+.sticky-history-item .sh-preview { color:#451a03; line-height:1.4; max-height:60px; overflow:hidden; }
 .sticky-toggle {
   position:fixed; bottom:24px; right:24px; z-index:899;
   width:44px; height:44px; border-radius:50%; border:none;
@@ -968,15 +1007,37 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
   :root:not(.light-mode) .sticky-header { background:#451a03; border-color:#92400e; }
   :root:not(.light-mode) .sticky-title { color:#fde68a; }
   :root:not(.light-mode) .sticky-actions button { color:#fde68a; }
-  :root:not(.light-mode) .sticky-note textarea { color:#fef9c3; }
-  :root:not(.light-mode) .sticky-note textarea::placeholder { color:#fde68a; }
+  :root:not(.light-mode) .sticky-fmt button { color:#fde68a; }
+  :root:not(.light-mode) .sticky-editor { color:#fef9c3; }
+  :root:not(.light-mode) .sticky-editor:empty::before { color:#fde68a; }
+  :root:not(.light-mode) .sticky-footer { color:#fde68a; }
+  :root:not(.light-mode) .sticky-footer button { color:#fde68a; border-color:#92400e; }
+  :root:not(.light-mode) .sticky-footer button:hover { background:#451a03; }
+  :root:not(.light-mode) .sticky-history-panel { background:#422006; }
+  :root:not(.light-mode) .sticky-history-header { background:#451a03; color:#fde68a; }
+  :root:not(.light-mode) .sticky-history-header button { color:#fde68a; }
+  :root:not(.light-mode) .sticky-history-item { border-color:#92400e; }
+  :root:not(.light-mode) .sticky-history-item:hover { background:#451a03; }
+  :root:not(.light-mode) .sticky-history-item .sh-date { color:#fde68a; }
+  :root:not(.light-mode) .sticky-history-item .sh-preview { color:#fef9c3; }
 }
 :root.dark-mode .sticky-note { background:#422006; border-color:#92400e; }
 :root.dark-mode .sticky-header { background:#451a03; border-color:#92400e; }
 :root.dark-mode .sticky-title { color:#fde68a; }
 :root.dark-mode .sticky-actions button { color:#fde68a; }
-:root.dark-mode .sticky-note textarea { color:#fef9c3; }
-:root.dark-mode .sticky-note textarea::placeholder { color:#fde68a; }
+:root.dark-mode .sticky-fmt button { color:#fde68a; }
+:root.dark-mode .sticky-editor { color:#fef9c3; }
+:root.dark-mode .sticky-editor:empty::before { color:#fde68a; }
+:root.dark-mode .sticky-footer { color:#fde68a; }
+:root.dark-mode .sticky-footer button { color:#fde68a; border-color:#92400e; }
+:root.dark-mode .sticky-footer button:hover { background:#451a03; }
+:root.dark-mode .sticky-history-panel { background:#422006; }
+:root.dark-mode .sticky-history-header { background:#451a03; color:#fde68a; }
+:root.dark-mode .sticky-history-header button { color:#fde68a; }
+:root.dark-mode .sticky-history-item { border-color:#92400e; }
+:root.dark-mode .sticky-history-item:hover { background:#451a03; }
+:root.dark-mode .sticky-history-item .sh-date { color:#fde68a; }
+:root.dark-mode .sticky-history-item .sh-preview { color:#fef9c3; }
 
 /* Links page */
 .sync-notes-page { padding:24px 28px; }
@@ -1461,15 +1522,30 @@ input, textarea, select { font-family:inherit; font-size:inherit; }
 <!-- STICKY NOTE -->
 <div class="sticky-note" id="stickyNote">
   <div class="sticky-header" id="stickyHeader">
-    <span class="sticky-title">Sticky Note</span>
+    <span class="sticky-title">&#128204; Quick Priorities</span>
     <div class="sticky-actions">
+      <button onclick="showStickyHistory()" title="Saved history">&#128218;</button>
       <button onclick="clearStickyNote()" title="Clear note">&#128465;</button>
       <button onclick="toggleStickyNote()" title="Minimize">&#8722;</button>
     </div>
   </div>
-  <textarea id="stickyText" placeholder="Type anything here..." oninput="saveStickyNote()"></textarea>
+  <div class="sticky-fmt">
+    <button onclick="stickyCmd('bold')" title="Bold"><b>B</b></button>
+    <button onclick="stickyCmd('italic')" title="Italic"><i>I</i></button>
+    <button onclick="stickyCmd('underline')" title="Underline"><u>U</u></button>
+    <button onclick="stickyCmd('strikeThrough')" title="Strikethrough"><s>S</s></button>
+    <button onclick="stickyCmd('insertOrderedList')" title="Numbered list">1.</button>
+    <button onclick="stickyCmd('insertUnorderedList')" title="Bullet list">&#8226;</button>
+    <button onclick="stickyHighlight()" title="Highlight">&#128396;</button>
+  </div>
+  <div class="sticky-editor" id="stickyEditor" contenteditable="true" data-placeholder="Type your priorities here..." oninput="saveStickyNote()"></div>
+  <div class="sticky-footer">
+    <span id="stickyTimestamp"></span>
+    <button onclick="saveStickySnapshot()">&#128190; Save to History</button>
+  </div>
+  <div class="sticky-history-panel" id="stickyHistoryPanel" style="display:none;"></div>
 </div>
-<button class="sticky-toggle" id="stickyToggle" onclick="toggleStickyNote()" title="Sticky Note (S)">&#128204;</button>
+<button class="sticky-toggle" id="stickyToggle" onclick="toggleStickyNote()" title="Quick Priorities (S)">&#128204;</button>
 
 
 
@@ -4586,6 +4662,8 @@ function deleteLinkGroup() {
 }
 
 // ===================== STICKY NOTE =====================
+let stickyDebounce = null;
+
 function stickyKey(prop) {
   const uid = currentUser?.email || 'default';
   return `sticky_${uid}_${prop}`;
@@ -4598,33 +4676,135 @@ function toggleStickyNote() {
   toggle.style.display = isHidden ? 'flex' : 'none';
   state.prefs[stickyKey('open')] = !isHidden;
   saveState();
-  if (!isHidden) document.getElementById('stickyText').focus();
+  if (!isHidden) document.getElementById('stickyEditor').focus();
+}
+
+function stickyCmd(cmd, val) {
+  document.execCommand(cmd, false, val || null);
+  document.getElementById('stickyEditor').focus();
+  saveStickyNote();
+}
+
+function stickyHighlight() {
+  const sel = window.getSelection();
+  if (!sel.rangeCount) return;
+  const range = sel.getRangeAt(0);
+  const parent = range.commonAncestorContainer.parentElement;
+  if (parent && parent.style.backgroundColor) {
+    document.execCommand('removeFormat', false, null);
+  } else {
+    document.execCommand('hiliteColor', false, '#fbbf24');
+  }
+  document.getElementById('stickyEditor').focus();
+  saveStickyNote();
 }
 
 function saveStickyNote() {
-  state.prefs[stickyKey('content')] = document.getElementById('stickyText').value;
-  autoGrowSticky();
-  saveState();
+  if (stickyDebounce) clearTimeout(stickyDebounce);
+  stickyDebounce = setTimeout(() => {
+    const editor = document.getElementById('stickyEditor');
+    state.prefs[stickyKey('content')] = editor.innerHTML;
+    updateStickyTimestamp();
+    saveState();
+  }, 500);
 }
 
-function autoGrowSticky() {
-  const ta = document.getElementById('stickyText');
-  ta.style.height = 'auto';
-  ta.style.height = ta.scrollHeight + 'px';
+function updateStickyTimestamp() {
+  const el = document.getElementById('stickyTimestamp');
+  if (el) el.textContent = 'Last edited: ' + new Date().toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
 }
 
 function clearStickyNote() {
-  if (!confirm('Clear the sticky note?')) return;
-  document.getElementById('stickyText').value = '';
+  if (!confirm('Clear the quick priorities note?')) return;
+  document.getElementById('stickyEditor').innerHTML = '';
   state.prefs[stickyKey('content')] = '';
   saveState();
+}
+
+function saveStickySnapshot() {
+  const editor = document.getElementById('stickyEditor');
+  const content = editor.innerHTML;
+  if (!content || content === '<br>') { alert('Nothing to save.'); return; }
+
+  const histKey = stickyKey('history');
+  if (!state.prefs[histKey]) state.prefs[histKey] = [];
+  state.prefs[histKey].unshift({
+    id: uuid(),
+    content: content,
+    date: new Date().toISOString(),
+    author: currentUser?.email || 'unknown'
+  });
+  if (state.prefs[histKey].length > 20) state.prefs[histKey] = state.prefs[histKey].slice(0, 20);
+  saveState();
+  alert('Snapshot saved to history!');
+}
+
+function showStickyHistory() {
+  const panel = document.getElementById('stickyHistoryPanel');
+  const histKey = stickyKey('history');
+  const history = state.prefs[histKey] || [];
+
+  let html = `<div class="sticky-history-header">
+    <span>&#128218; Saved History (${history.length})</span>
+    <button onclick="closeStickyHistory()">&times;</button>
+  </div>
+  <div class="sticky-history-list">`;
+
+  if (history.length === 0) {
+    html += `<div style="text-align:center;padding:20px;font-size:12px;color:var(--text-muted);">No saved snapshots yet.<br>Click "Save to History" to save your current note.</div>`;
+  }
+
+  history.forEach(h => {
+    const dt = new Date(h.date);
+    const formatted = dt.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric' }) + ' ' + dt.toLocaleTimeString('en-US', { hour:'numeric', minute:'2-digit' });
+    const preview = h.content.replace(/<[^>]+>/g, ' ').substring(0, 120);
+    html += `<div class="sticky-history-item" onclick="restoreStickySnapshot('${h.id}')">
+      <div class="sh-date">${formatted}
+        <span style="float:right;cursor:pointer;font-size:12px;" onclick="event.stopPropagation();deleteStickySnapshot('${h.id}')" title="Delete">&#128465;</span>
+      </div>
+      <div class="sh-preview">${esc(preview)}</div>
+    </div>`;
+  });
+
+  html += `</div>`;
+  panel.innerHTML = html;
+  panel.style.display = 'flex';
+}
+
+function closeStickyHistory() {
+  document.getElementById('stickyHistoryPanel').style.display = 'none';
+}
+
+function restoreStickySnapshot(id) {
+  const histKey = stickyKey('history');
+  const history = state.prefs[histKey] || [];
+  const snap = history.find(h => h.id === id);
+  if (!snap) return;
+  if (!confirm('Replace current note with this saved snapshot?')) return;
+  document.getElementById('stickyEditor').innerHTML = snap.content;
+  state.prefs[stickyKey('content')] = snap.content;
+  saveState();
+  closeStickyHistory();
+}
+
+function deleteStickySnapshot(id) {
+  if (!confirm('Delete this snapshot?')) return;
+  const histKey = stickyKey('history');
+  state.prefs[histKey] = (state.prefs[histKey] || []).filter(h => h.id !== id);
+  saveState();
+  showStickyHistory();
 }
 
 function initStickyNote() {
   const note = document.getElementById('stickyNote');
   const toggle = document.getElementById('stickyToggle');
-  document.getElementById('stickyText').value = state.prefs[stickyKey('content')] || '';
-  setTimeout(autoGrowSticky, 50);
+  const editor = document.getElementById('stickyEditor');
+
+  const saved = state.prefs[stickyKey('content')] || '';
+  if (saved) {
+    editor.innerHTML = saved;
+  }
+
   if (state.prefs[stickyKey('open')] === false) {
     note.classList.add('hidden');
     toggle.style.display = 'flex';
@@ -4642,6 +4822,7 @@ function initStickyNote() {
   const header = document.getElementById('stickyHeader');
   let isDragging = false, startX, startY, origX, origY;
   header.addEventListener('mousedown', e => {
+    if (e.target.tagName === 'BUTTON') return;
     isDragging = true;
     startX = e.clientX; startY = e.clientY;
     const rect = note.getBoundingClientRect();
